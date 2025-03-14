@@ -3,6 +3,7 @@ import random as rd
 from pydub import AudioSegment
 import pandas as pd
 import time as tm
+import os
 
  
 # 设置文件路径
@@ -43,17 +44,33 @@ class RandomVideo(object):
         database = pd.read_csv(MUSIC_PATH, encoding="gb2312") # 获取数据库
         name = database.at[song_index, MAP_NAME] # 获取名字
         return name
+    
+    @classmethod
+    def getAlias(self, song_index) -> list:
+        database = pd.read_csv(MUSIC_PATH, encoding="gb2312") # 获取数据库
+        column = database.shape[1] # 获取总列数
+        name = database.at[song_index, MAP_NAME] # 获取名字
+        alias=[name]
+        for i in range(2, column):
+            alias.append(database.iloc[song_index, i])
+        return alias
         
+    
     @classmethod
     def getRandomClip(self, song_index : int = 0, clip_duration : int = 5) -> str:
         
         database = pd.read_csv(MUSIC_PATH, encoding="gb2312") # 获取数据库
         
         name = database.at[song_index, MAP_NAME] # 获取名字
-        lobby = int(database.at[song_index, LOBBY]) # 获取路径
+        if str(database.at[song_index, LOBBY])=="nan":
+            lobby = 0
+        else:
+            lobby = int(database.at[song_index, LOBBY]) # 获取路径
         
         music_path = FATHER_PATH + str(lobby) + "/" + str(name) + ".mp4" # "./src/database/music/" + "1" + "/" + "节奏山脊"
-        
+        # music_path = FATHER_PATH + str(2) + "/" + str("机制库") + ".mp4" # "./src/database/music/" + "1" + "/" + "节奏山脊"
+        if not os.path.exists(music_path):
+            return music_path
         audio = AudioSegment.from_file(music_path)
         total_duration = audio.duration_seconds
         rand_start = rd.randint(0, int(total_duration-clip_duration))

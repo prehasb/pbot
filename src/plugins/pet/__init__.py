@@ -68,12 +68,13 @@ takeall = on_command("takeall")
 async def handle_takeall(event: MessageEvent):
     # 0、获取用户id
     user_id = event.user_id
-    
+    msg = ""
     # 1、根据当前时间差获取玛德琳等级和水晶
     p = Pet(user_id)
     exp_num = p.getExpNum()
-    msg = MessageSegment.text("at")
-    msg = f"你获得了{exp_num}经验值"
+    if p.exp > p.getLevelUpExp()*10:
+        msg += "你的玛德琳快饿死了！\r\n"
+    msg += f"你获得了{exp_num}经验值"
     cry_num = p.getCryNum()
     if cry_num != 0:
         msg += f"\r\n你获得了{cry_num}个冲刺水晶"

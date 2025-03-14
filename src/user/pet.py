@@ -164,6 +164,11 @@ class Pet(User):
         total_exp = second_difference * expPs
         if total_exp > self.getMaxSaveExp():
             total_exp = self.getMaxSaveExp()
+        
+        # 超高经验值惩罚
+        if self.exp > self.getLevelUpExp()*10:
+            total_exp *= (self.getLevelUpExp()*10)/(self.exp)
+            total_exp = int(total_exp)
         return total_exp
     
     def getCryNum(self) -> int:

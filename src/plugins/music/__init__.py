@@ -6,6 +6,8 @@ from nonebot.adapters.onebot.v11 import GroupMessageEvent
 # from nonebot.adapters.onebot.v11 import PrivateMessageEvent
 import random as rd
 import time as tm
+from datetime import datetime
+import datetime as dt
 from user.jrrpState import jrrpState
 from user.pet import Pet
 import os
@@ -27,14 +29,26 @@ giveup = on_command("giveup")
 index_now = 0
 guess_state = False
 total_ans = 0
+begin_time = datetime.now() - dt.timedelta(seconds=30)
+
+def isXsLastTime(last_time: datetime, scnds):
+    current_time = datetime.now()
+    if current_time - last_time > dt.timedelta(seconds=scnds):
+        return True
+    return False
+    
 
 @music.handle()
 async def handle_music(event: GroupMessageEvent):
     global guess_state
     global index_now
     global total_ans
+    global begin_time
     total_ans = 0
     if guess_state:
+        await music.finish()
+    
+    if not isXsLastTime(begin_time, scnds=30):
         await music.finish()
     
     index_now = RandomVideo.getRandomIndex()
@@ -42,11 +56,18 @@ async def handle_music(event: GroupMessageEvent):
     rd.seed(tm.time_ns())
     rand_time = rd.randint(1, 10)
     
+    output_music_path = RandomVideo.getRandomClip(song_index=index_now, clip_duration=rand_time)
+    if not os.path.exists(output_music_path):
+        msg = f"ValueError: there is no file in {output_music_path}"
+        await music.finish(message=msg)
+    # ValueError: cannot convert float NaN to integer
+    
     output_music_path = "file:///" + os.path.abspath(RandomVideo.getRandomClip(song_index=index_now, clip_duration=rand_time))
     
     msg = MessageSegment.record(file=output_music_path)
     
     guess_state = True
+    begin_time = datetime.now()
     await music.finish(message=msg)
 
 
@@ -68,7 +89,7 @@ async def handle_guess(event: GroupMessageEvent, arg: Message = CommandArg()):
     print(f"name: {name}")
     print(f"RandomVideo.getName(index_now): {RandomVideo.getName(index_now)}")
     
-    if name == RandomVideo.getName(index_now):
+    if name in RandomVideo.getAlias(index_now):
         user_id = event.user_id
         p = Pet(user_id=user_id)
         
