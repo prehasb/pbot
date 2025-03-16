@@ -18,6 +18,7 @@ TIME_NAN = "2000-01-01 00:00:00"
 
 # 0、从群里读出jrrp指令
 music = on_command("music")
+# music_lunatic = on_command("musicl")
 guess = on_command("guess")
 giveup = on_command("giveup")
 
@@ -39,7 +40,7 @@ def isXsLastTime(last_time: datetime, scnds):
     
 
 @music.handle()
-async def handle_music(event: GroupMessageEvent):
+async def handle_music(event: GroupMessageEvent, arg: Message = CommandArg()):
     global guess_state
     global index_now
     global total_ans
@@ -51,10 +52,27 @@ async def handle_music(event: GroupMessageEvent):
     if not isXsLastTime(begin_time, scnds=30):
         await music.finish()
     
-    index_now = RandomVideo.getRandomIndex()
+    args = str(arg).lower().split()
     
+    if len(args) != 1 and len(args) != 0:
+        await music.finish()
+    
+    index_now = RandomVideo.getRandomIndex()
+    # index_now = 123
+    
+    # 控制难度
     rd.seed(tm.time_ns())
     rand_time = rd.randint(1, 10)
+    
+    if len(args) != 0:
+        if str(arg[0]) == "e":
+            rand_time = 10
+        if str(arg[0]) == "n":
+            rand_time = 5
+        if str(arg[0]) == "h":
+            rand_time = 2
+        if str(arg[0]) == "l":
+            rand_time = 1
     
     output_music_path = RandomVideo.getRandomClip(song_index=index_now, clip_duration=rand_time)
     if not os.path.exists(output_music_path):
@@ -62,13 +80,42 @@ async def handle_music(event: GroupMessageEvent):
         await music.finish(message=msg)
     # ValueError: cannot convert float NaN to integer
     
-    output_music_path = "file:///" + os.path.abspath(RandomVideo.getRandomClip(song_index=index_now, clip_duration=rand_time))
+    output_music_path = "file:///" + os.path.abspath(output_music_path)
     
     msg = MessageSegment.record(file=output_music_path)
     
     guess_state = True
     begin_time = datetime.now()
     await music.finish(message=msg)
+
+# @music_lunatic.handle()
+# async def handle_music(event: GroupMessageEvent):
+#     global guess_state
+#     global index_now
+#     global total_ans
+#     global begin_time
+#     total_ans = 0
+#     if guess_state:
+#         await music.finish()
+    
+#     if not isXsLastTime(begin_time, scnds=30):
+#         await music.finish()
+    
+#     index_now = RandomVideo.getRandomIndex()
+    
+#     output_music_path = RandomVideo.getRandomClip(song_index=index_now, clip_duration=1)
+#     if not os.path.exists(output_music_path):
+#         msg = f"ValueError: there is no file in {output_music_path}"
+#         await music.finish(message=msg)
+#     # ValueError: cannot convert float NaN to integer
+    
+#     output_music_path = "file:///" + os.path.abspath(output_music_path)
+    
+#     msg = MessageSegment.record(file=output_music_path)
+    
+#     guess_state = True
+#     begin_time = datetime.now()
+#     await music.finish(message=msg)
 
 
 @guess.handle()
