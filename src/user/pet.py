@@ -28,6 +28,7 @@ TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 TIME_NAN = "2000-01-01 00:00:00"
 
 class Pet(User):
+    '''Pet宠物类'''
     
     level:int = None
     '''宠物等级'''
@@ -39,6 +40,7 @@ class Pet(User):
     '''工厂当前等级'''
     crystal_num:int = None
     '''水晶当前数量'''
+    
     last_lookup_time:datetime = datetime.strptime(TIME_NAN, TIME_FORMAT)
     
     def __init__(self, user_id : int):
@@ -46,8 +48,8 @@ class Pet(User):
         self._update()
     
     def _update(self):
-        super()._update()
         '''更新自己的状态'''
+        super()._update()
         # 更新 level
         
         t=str(self.read(PET_LEVEL))
@@ -99,158 +101,6 @@ class Pet(User):
         else:
             self.last_lookup_time = datetime.strptime(t, TIME_FORMAT)
     
-    def _getFacrotyExpPs(self) -> int:
-        factory_table = pd.read_csv(FACTORY_TABLE_PATH, encoding="gb2312")
-        expPs = factory_table.at[self.factory_level-1, EXP_PS]
-        return expPs
-
-    def _getFacrotyCryPh(self) -> int:
-        factory_table = pd.read_csv(FACTORY_TABLE_PATH, encoding="gb2312")
-        CryPh = factory_table.at[self.factory_level-1, CRY_PS]
-        return CryPh
-        
-    def getLevelUpExp(self) -> int:
-        '''查询升级所需经验'''
-        pet_table = pd.read_csv(PET_TABLE_PATH, encoding="gb2312")
-        levelup_exp = pet_table.at[self.level-1, LEVELUP_EXP]
-        return int(levelup_exp)
-
-    def getLevelUpCry(self) -> int:
-        '''查询升级所需水晶'''
-        pet_table = pd.read_csv(PET_TABLE_PATH, encoding="gb2312")
-        levelup_cry = int(float(pet_table.at[self.level-1, LEVELUP_CRY]))
-        return levelup_cry
-    
-    def getMaxSaveExp(self) -> int:
-        '''查询最大存储经验'''
-        factory_table = pd.read_csv(FACTORY_TABLE_PATH, encoding="gb2312")
-        max_save_exp = factory_table.at[self.factory_level-1, MAX_SAVE_EXP]
-        return int(max_save_exp)
-
-    def getName(self) -> str:
-        '''获取宠物名称'''
-        pet_table = pd.read_csv(PET_TABLE_PATH, encoding="gb2312")
-        name = pet_table.at[self.level-1, NAME]
-        return name
-
-    def getImagePath(self) -> str:
-        name = self.getName()
-        image_path = os.path.abspath(IMAGE_PATH) +"\\" + name + ".png"
-        if not os.path.exists(image_path):
-            return None
-        file_image_path = "file:///" + image_path
-        print(f"imagepath: {file_image_path}")
-        return file_image_path
-
-    def getFacName(self) -> str:
-        '''获取工厂名称'''
-        fac_table = pd.read_csv(FACTORY_TABLE_PATH, encoding="gb2312")
-        name = fac_table.at[self.factory_level-1, NAME]
-        return name
-    
-    def giveCry(self, num) -> str:
-        self.crystal_num += num
-        self.write(CRY_NUM, self.crystal_num)
-        return f"已发放{num}个水晶"
-    
-    def getExpNum(self) -> int:
-        '''待领取的exp值'''
-        current_time = dt.datetime.now()
-        time_difference = current_time - self.last_lookup_time
-        second_difference = int(time_difference.total_seconds())
-        print(f"second_difference: {second_difference}")
-        expPs = self._getFacrotyExpPs()
-        
-        total_exp = second_difference * expPs
-        if total_exp > self.getMaxSaveExp():
-            total_exp = self.getMaxSaveExp()
-        
-        # 超高经验值惩罚
-        if self.exp > self.getLevelUpExp()*10:
-            total_exp *= (self.getLevelUpExp()*10)/(self.exp)
-            total_exp = int(total_exp)
-        return total_exp
-    
-    def getCryNum(self) -> int:
-        '''待领取的水晶数量'''
-        current_time_hour = dt.datetime.now().replace(minute=0,second=0,microsecond=0)
-        last_lookup_time_hour = self.last_lookup_time.replace(minute=0,second=0,microsecond=0)
-        time_difference = current_time_hour - last_lookup_time_hour
-        second_difference = time_difference.total_seconds()
-        hour_difference = int(second_difference//3600)
-        cryPh = self._getFacrotyCryPh()
-        return hour_difference * cryPh
-    
-    def getFacLevelupCry(self) -> int:
-        factory_table = pd.read_csv(FACTORY_TABLE_PATH, encoding="gb2312")
-        levelup_cry = int(factory_table.at[self.factory_level-1, LEVELUP_CRY])
-        return levelup_cry
-        
-    def levelupFac(self) -> str:
-        msg = ""
-        if self.crystal_num >= self.getFacLevelupCry():
-            self.crystal_num -= self.getFacLevelupCry()
-            self.factory_level += 1
-            self.write(CRY_NUM, self.crystal_num)
-            self.write(FAC_LEVEL, self.factory_level)
-            msg = f'你成功升级了工厂，现在你的工厂等级为: 冲刺水晶工厂lv{self.factory_level}'
-            if self._getFacrotyExpPs()>0:
-                msg += f'\r\n每秒产出{self._getFacrotyExpPs()}点经验'
-            if self._getFacrotyCryPh()>0:
-                msg += f'\r\n每小时产出{self._getFacrotyCryPh()}个水晶'
-        else:
-            msg = '你的水晶不够让工厂升级！'
-        return msg
-    
-    def addExpbyJRRP(self, jrrp) -> str:
-        add_exp = int(jrrp*0.01*(self.getLevelUpExp() - self.exp))
-        min_exp = int(jrrp*0.001*(self.getLevelUpExp()))
-        if add_exp < min_exp :
-            add_exp = min_exp
-        self.exp += add_exp
-        self.write(PET_EXP, self.exp)
-        msg = f"\r\n已领取{add_exp}点经验值！"
-        msg += f"\r\n 当前玛德琳的经验值为{self.exp}/{self.getLevelUpExp()}点！"
-        msg += self.levelupPet()
-        return msg
-    
-    def feed(self, num:int) -> str:
-        '''喂养num个水晶，多的退返'''
-        msg = ""
-        # self.getPetLevelupCry() = 2, num = 3, self.feeded_cry = 1
-        # self.getPetLevelupCry() = 2, num = -1, self.feeded_cry = 1
-        # self.getPetLevelupCry() = 2, num = 0, self.feeded_cry = 1
-        feednum = 0
-        
-        if(self.crystal_num < num):
-            msg += f"\r\n你没有{num}个水晶，你只有{self.crystal_num}个"
-            return msg
-        
-        if self.getLevelUpCry()>0: # 玛德琳想吃的水晶数是正数
-            if self.feeded_cry + num <= self.getLevelUpCry(): # 喂的水晶小于等于要吃的水晶
-                feednum = num # feednum = ?, -1, 0
-            if self.feeded_cry + num > self.getLevelUpCry(): # 喂的水晶大于要吃的水晶
-                feednum = self.getLevelUpCry() - self.feeded_cry # feednum = 1, ?, ?
-        
-        if num <=0: # feednum = ?, -1, ?
-            return f"ValueError: {feednum} is not a positive number."
-            return f""
-        
-        self.feeded_cry += feednum
-        self.crystal_num -= feednum
-        if feednum <= 0:
-            msg += "你的玛德琳不想吃水晶"
-            return msg
-        
-        msg += f"\r\n已喂养{feednum}个水晶"
-        
-        msg += self.levelupPet()
-        
-        self.write(FEEDED_CRY, self.feeded_cry)
-        self.write(CRY_NUM, self.crystal_num)
-        
-        return msg
-    
     def canLevelUp(self) -> bool:
         '''查询升级条件'''
         levelup_exp = self.getLevelUpExp()
@@ -260,7 +110,7 @@ class Pet(User):
         return False
         
     def levelupPet(self) -> str:
-        '''按下升级按钮'''
+        '''按下升级按钮，累计升级'''
         msg = ""
         leveluped = False
         get_cry_num = 0
@@ -313,7 +163,205 @@ class Pet(User):
         self.write(CRY_NUM, self.crystal_num)
         self._update()
         return msg
+        
+    def giveCry(self, num) -> str:
+        self.crystal_num += num
+        self.write(CRY_NUM, self.crystal_num)
+        return f"已发放{num}个水晶"
+    
+    def addExp(self, exp) -> str:
+        self.exp += exp
+        self.write(PET_EXP, self.exp)
+        msg = f"已获得{exp}点exp"
+        msg += self.levelupPet()
+        return msg
+    
+    def hasCry(self, num) ->bool:
+        if self.crystal_num >= num:
+            return True
+        else:
+            return False
+        
+    def useCry(self, num) -> str:
+        if not self.hasCry(num):
+            msg = f"你没有足够的水晶！，你只有{self.crystal_num}个"
+            return msg
+        cry_before = self.crystal_num
+        self.crystal_num -= num
+        self.write(CRY_NUM, self.crystal_num)
+        msg = f"\r\n已使用{num}个水晶，还剩{self.crystal_num}个"
+        return msg
+        
+    def levelupFac(self) -> str:
+        msg = ""
+        if self.crystal_num >= self.getFacLevelupCry():
+            self.crystal_num -= self.getFacLevelupCry()
+            self.factory_level += 1
+            self.write(CRY_NUM, self.crystal_num)
+            self.write(FAC_LEVEL, self.factory_level)
+            msg = f'你成功升级了工厂，现在你的工厂等级为: 冲刺水晶工厂lv{self.factory_level}'
+            if self._getFacrotyExpPs()>0:
+                msg += f'\r\n每秒产出{self._getFacrotyExpPs()}点经验'
+            if self._getFacrotyCryPh()>0:
+                msg += f'\r\n每小时产出{self._getFacrotyCryPh()}个水晶'
+        else:
+            msg = '你的水晶不够让工厂升级！'
+        return msg
+    
+    def addExpbyJRRP(self, jrrp:int) -> str:
+        # add_exp = int(jrrp*0.01*(self.getLevelUpExp()))*2
+        add_exp = int(jrrp*0.01*self.getMaxSaveExp())
+        min_exp = int(jrrp*0.001*(self.getLevelUpExp())*2)
+        if add_exp < min_exp :
+            add_exp = min_exp
+        self.exp += add_exp
+        self.write(PET_EXP, self.exp)
+        msg = f"\r\n已领取{add_exp}点经验值！"
+        msg += f"\r\n 当前玛德琳的经验值为{self.exp}/{self.getLevelUpExp()}点！"
+        msg += self.levelupPet()
+        return msg
+    
+    def feed(self, num:int) -> str:
+        '''喂养num个水晶，多的退返'''
+        msg = ""
+        # self.getPetLevelupCry() = 2, num = 3, self.feeded_cry = 1
+        # self.getPetLevelupCry() = 2, num = -1, self.feeded_cry = 1
+        # self.getPetLevelupCry() = 2, num = 0, self.feeded_cry = 1
+        feednum = 0
+        
+        if num <= 0: # feednum = ?, -1, ?
+            # return f"ValueError: {feednum} is not a positive number."
+            return f""
+        
+        if(self.crystal_num < num):
+            msg += f"\r\n你没有{num}个水晶，你只有{self.crystal_num}个"
+            return msg
+        
+        if self.getLevelUpCry()>0: # 玛德琳想吃的水晶数是正数
+            if self.feeded_cry + num <= self.getLevelUpCry(): # 喂的水晶小于等于要吃的水晶
+                feednum = num # feednum = ?, -1, 0
+            if self.feeded_cry + num > self.getLevelUpCry(): # 喂的水晶大于要吃的水晶
+                feednum = self.getLevelUpCry() - self.feeded_cry # feednum = 1, ?, ?
+        
+        if ((feednum == 0 or self.feeded_cry >= self.getLevelUpCry()) and num > 0):
+            msg += "你的玛德琳不想吃水晶"
+            return msg
+        
+        self.feeded_cry += feednum
+        self.crystal_num -= feednum
+        
+        msg += f"\r\n已喂养{feednum}个水晶"
+        
+        msg += self.levelupPet()
+        
+        self.write(FEEDED_CRY, self.feeded_cry)
+        self.write(CRY_NUM, self.crystal_num)
+        
+        return msg
+    
+    # 以下是get类型函数
+    
+    def _getFacrotyExpPs(self) -> int:
+        factory_table = pd.read_csv(FACTORY_TABLE_PATH, encoding="gb2312")
+        expPs = factory_table.at[self.factory_level-1, EXP_PS]
+        return expPs
 
+    def _getFacrotyCryPh(self) -> int:
+        factory_table = pd.read_csv(FACTORY_TABLE_PATH, encoding="gb2312")
+        CryPh = factory_table.at[self.factory_level-1, CRY_PS]
+        return CryPh
+        
+    def getLevelUpExp(self) -> int:
+        '''查询升级所需经验'''
+        pet_table = pd.read_csv(PET_TABLE_PATH, encoding="gb2312")
+        levelup_exp = pet_table.at[self.level-1, LEVELUP_EXP]
+        return int(levelup_exp)
+
+    def getLevelUpCry(self) -> int:
+        '''查询升级所需水晶'''
+        pet_table = pd.read_csv(PET_TABLE_PATH, encoding="gb2312")
+        levelup_cry = int(float(pet_table.at[self.level-1, LEVELUP_CRY]))
+        return levelup_cry
+    
+    def getMaxSaveExp(self) -> int:
+        '''查询最大存储经验'''
+        factory_table = pd.read_csv(FACTORY_TABLE_PATH, encoding="gb2312")
+        max_save_exp = factory_table.at[self.factory_level-1, MAX_SAVE_EXP]
+        
+        # 20250322添加：经验存储球
+        #######################################################
+        from item.expSaveBall import expSaveBall
+        ball = expSaveBall(self.user_id)
+        max_save_exp += ball.getAddMaxExp()
+        #######################################################
+        
+        return int(max_save_exp)
+    
+    @classmethod
+    def getNamebyLevel(self, level:int) -> str:
+        '''获取宠物名称'''
+        pet_table = pd.read_csv(PET_TABLE_PATH, encoding="gb2312")
+        name = pet_table.at[level-1, NAME]
+        return name
+
+    def getName(self) -> str:
+        '''获取宠物名称'''
+        return self.getNamebyLevel(level=self.level)
+
+    @classmethod
+    def getImagePathbyLevel(self, level:int) -> str:
+        '''获取宠物图片路径'''
+        name = self.getNamebyLevel(level=level)
+        image_path = os.path.abspath(IMAGE_PATH) +"\\" + name + ".png"
+        if not os.path.exists(image_path):
+            return None
+        file_image_path = "file:///" + image_path
+        # print(f"imagepath: {file_image_path}")
+        return file_image_path
+    
+    def getImagePath(self) -> str:
+        '''获取宠物图片路径'''
+        return self.getImagePathbyLevel(level=self.level)
+
+    def getFacName(self) -> str:
+        '''获取工厂名称'''
+        fac_table = pd.read_csv(FACTORY_TABLE_PATH, encoding="gb2312")
+        name = fac_table.at[self.factory_level-1, NAME]
+        return name
+
+    def getExpNum(self) -> int:
+        '''待领取的exp值'''
+        current_time = dt.datetime.now()
+        time_difference = current_time - self.last_lookup_time
+        second_difference = int(time_difference.total_seconds())
+        print(f"second_difference: {second_difference}")
+        expPs = self._getFacrotyExpPs()
+        
+        total_exp = second_difference * expPs
+        if total_exp > self.getMaxSaveExp():
+            total_exp = self.getMaxSaveExp()
+        
+        # 超高经验值惩罚
+        if self.exp > self.getLevelUpExp()*10:
+            total_exp *= (self.getLevelUpExp()*10)/(self.exp)
+            total_exp = int(total_exp)
+        return total_exp
+    
+    def getCryNum(self) -> int:
+        '''待领取的水晶数量'''
+        current_time_hour = dt.datetime.now().replace(minute=0,second=0,microsecond=0)
+        last_lookup_time_hour = self.last_lookup_time.replace(minute=0,second=0,microsecond=0)
+        time_difference = current_time_hour - last_lookup_time_hour
+        second_difference = time_difference.total_seconds()
+        hour_difference = int(second_difference//3600)
+        cryPh = self._getFacrotyCryPh()
+        return hour_difference * cryPh
+    
+    def getFacLevelupCry(self) -> int:
+        factory_table = pd.read_csv(FACTORY_TABLE_PATH, encoding="gb2312")
+        levelup_cry = int(factory_table.at[self.factory_level-1, LEVELUP_CRY])
+        return levelup_cry
+        
 
 
 

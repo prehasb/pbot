@@ -49,7 +49,7 @@ async def handle_music(event: GroupMessageEvent, arg: Message = CommandArg()):
     if guess_state:
         await music.finish()
     
-    if not isXsLastTime(begin_time, scnds=30):
+    if not isXsLastTime(begin_time, scnds=15):
         await music.finish()
     
     args = str(arg).lower().split()

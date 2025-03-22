@@ -1,0 +1,7 @@
+item_id,name,name_in_useritem,price,max_number,has_state,can_use
+0,智商检测器,test_item,3,135,0,TRUE
+1,测试道具2,state_item,1,1,1,TRUE
+2,经验吞噬者,exp_eater,500,0,1,TRUE
+3,水晶吞噬者,cry_eater,500,0,1,TRUE
+4,经验存储球,expSaveBall,100,100,0,FALSE
+5,,,,,,

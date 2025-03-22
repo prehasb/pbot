@@ -38,7 +38,7 @@ def get_a_random_number(userid: int, time: int) -> int:
 ck = on_command("ck")
 
 @ck.handle()
-async def handle_jrrp(event: MessageEvent):
+async def handle_ck(event: MessageEvent):
     # 0、获取用户id
     user_id = event.user_id
     
@@ -109,11 +109,17 @@ async def handle_feed(event: MessageEvent, arg: Message = CommandArg()):
     if len(args) != 1:
         await feed.finish()
     
-    feed_cry_num = int(args[0])
-    
     # 0、获取用户id
     user_id = event.user_id
     p = Pet(user_id)
+    
+    if args[0] == "all":
+        feed_cry_num = p.getLevelUpCry() - p.feeded_cry
+        if feed_cry_num == 0:
+            feed_cry_num = 1 # all 特殊处理:若feednum=0，置1让函数返回不想吃水晶的语句
+    else:
+        feed_cry_num = int(args[0])
+    
     
     # 1、喂养宠物个数水晶
     msg = p.feed(feed_cry_num)
@@ -144,4 +150,35 @@ async def handle_feed(event: MessageEvent, arg: Message = CommandArg()):
     db.to_csv(DATABASE_PATH, index=False)
     await giveall.finish(message=f"已分发{give_cry_num}水晶")
     
+show = on_command("show")
 
+@show.handle()
+async def show_hander(event: MessageEvent, arg: Message = CommandArg()):
+    args = str(arg).lower().split()
+    
+    if len(args) != 1:
+        await show.finish()
+    
+    level = int(args[0])
+    if not isinstance(level, int):
+        await show.finish()
+    
+    # 0、获取用户id
+    user_id = event.user_id
+    p = Pet(user_id)
+    
+    level_now = p.level
+    
+    if level_now < level:
+        msg = f"你的玛德琳没到{level}级！"
+        await show.finish(message=msg, at_sender = True)
+    
+    msg = ""
+    msg += f"\r\n- 玛德琳: lv{level} {p.getNamebyLevel(level=level)}"
+    if p.getImagePathbyLevel(level=level) != None:
+        msg += MessageSegment.image(file=p.getImagePathbyLevel(level=level))
+    
+    await show.finish(message=msg, at_sender = True)
+    
+    
+    

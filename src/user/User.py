@@ -18,12 +18,13 @@ class User(object):
     user_row : int
     '''用户所在行'''
     
-    def __init__(self, user_id : int):
+    def __init__(self, user_id : int, database_path : str = DATABASE_PATH):
         super(User, self).__init__()
         self.user_id = user_id
+        self.database_path = database_path
         self.row = None
         
-        database = pd.read_csv(DATABASE_PATH) # pandas读取操作，现在database是一个矩阵
+        database = pd.read_csv(self.database_path) # pandas读取操作，现在database是一个矩阵
         # database: (example)
         #   col1  col2
         # 0  1     2
@@ -48,7 +49,8 @@ class User(object):
         return f"行:{self.row}\r\n用户id:{self.user_id}\r\n"
     
     def read(self, column:str):
-        database = pd.read_csv(DATABASE_PATH)
+        print(f"self.database_path: {self.database_path}")
+        database = pd.read_csv(self.database_path)
         data = database.at[self.row, column]
         return data
         
@@ -60,7 +62,7 @@ class User(object):
         pass
     
     def _createNewUser(self):
-        db = pd.read_csv(DATABASE_PATH)
+        db = pd.read_csv(self.database_path)
         # db: (example)
         #    id  col2
         # 0  1     2
@@ -89,16 +91,16 @@ class User(object):
         # 3  9     9
         # 4  10   nan
         
-        df_combined.to_csv(DATABASE_PATH, index = False)
+        df_combined.to_csv(self.database_path, index = False)
     
     def write(self, column:str, data) -> bool:
         '''向数据库内填写数据，同时更新自己的状态'''
         if self.row == None:
             return False
         
-        database = pd.read_csv(DATABASE_PATH)
+        database = pd.read_csv(self.database_path)
         database.at[self.row, column] = data
-        database.to_csv(DATABASE_PATH, index=False)
+        database.to_csv(self.database_path, index=False)
         # self._update()
         return True
 

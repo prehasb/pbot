@@ -7,6 +7,10 @@ appsettings.json
 
 # 数据库，防止泄露隐私
 src/database/database*.csv
+src/database/useritem*.csv
+src/database/global*.csv
+src/database/copy/
+
 
 # 登录信息，防止泄露我的隐私
 keystore.json
