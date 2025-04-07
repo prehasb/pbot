@@ -58,12 +58,13 @@ async def handle_music(event: GroupMessageEvent, arg: Message = CommandArg()):
         await music.finish()
     
     index_now = RandomVideo.getRandomIndex()
-    # index_now = 123
+    # index_now = 100
     
     # 控制难度
     rd.seed(tm.time_ns())
     rand_time = rd.randint(1, 10)
     
+    all_music = False
     if len(args) != 0:
         if str(arg[0]) == "e":
             rand_time = 10
@@ -73,6 +74,9 @@ async def handle_music(event: GroupMessageEvent, arg: Message = CommandArg()):
             rand_time = 2
         if str(arg[0]) == "l":
             rand_time = 1
+        if str(arg[0]) == "all":
+            all_music = True
+            rand_time = -1
     
     output_music_path = RandomVideo.getRandomClip(song_index=index_now, clip_duration=rand_time)
     if not os.path.exists(output_music_path):
@@ -85,38 +89,11 @@ async def handle_music(event: GroupMessageEvent, arg: Message = CommandArg()):
     msg = MessageSegment.record(file=output_music_path)
     
     guess_state = True
-    begin_time = datetime.now()
+    if all_music:
+        guess_state = False
+        await music.send(message=f"接下来播放{RandomVideo.getName(index_now)}")
+    begin_time = dt.datetime.now()
     await music.finish(message=msg)
-
-# @music_lunatic.handle()
-# async def handle_music(event: GroupMessageEvent):
-#     global guess_state
-#     global index_now
-#     global total_ans
-#     global begin_time
-#     total_ans = 0
-#     if guess_state:
-#         await music.finish()
-    
-#     if not isXsLastTime(begin_time, scnds=30):
-#         await music.finish()
-    
-#     index_now = RandomVideo.getRandomIndex()
-    
-#     output_music_path = RandomVideo.getRandomClip(song_index=index_now, clip_duration=1)
-#     if not os.path.exists(output_music_path):
-#         msg = f"ValueError: there is no file in {output_music_path}"
-#         await music.finish(message=msg)
-#     # ValueError: cannot convert float NaN to integer
-    
-#     output_music_path = "file:///" + os.path.abspath(output_music_path)
-    
-#     msg = MessageSegment.record(file=output_music_path)
-    
-#     guess_state = True
-#     begin_time = datetime.now()
-#     await music.finish(message=msg)
-
 
 @guess.handle()
 async def handle_guess(event: GroupMessageEvent, arg: Message = CommandArg()):
@@ -142,7 +119,7 @@ async def handle_guess(event: GroupMessageEvent, arg: Message = CommandArg()):
         
         guess_state = False
         msg = f"正确，答案是{RandomVideo.getName(index_now)}\r\n"
-        msg += p.giveCry(1)
+        msg += p.addCry(1)
         await guess.finish(message=msg, at_sender=True)
     else:
         total_ans+=1
@@ -152,8 +129,6 @@ async def handle_guess(event: GroupMessageEvent, arg: Message = CommandArg()):
             await guess.send(message=msg)
         await guess.finish()
         
-
-
 @giveup.handle()
 async def handle_giveup(event: GroupMessageEvent):
     global guess_state
@@ -164,19 +139,3 @@ async def handle_giveup(event: GroupMessageEvent):
     guess_state = False
     msg = f"已放弃。答案是{RandomVideo.getName(index_now)}"
     await giveup.finish(message=msg)
-
-
-
-
-
-
-
-
-# MUSIC_PATH = "file:///" + os.path.abspath("./src/database/music/output1.amr")
-# MUSIC_PATH = os.path.abspath("./src/database/music/output.mp4")
-
-# b64 = ToBase64(MUSIC_PATH)
-# print(f"MUSIC_PATH: {MUSIC_PATH}\r\n")
-
-# print(f'music message: {json_group_audio(event.group_id, b64)}')
-# requests.post(url = 'http://localhost:8765/send_group_msg', json = json_group_audio(event.group_id, MUSIC_PATH))

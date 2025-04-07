@@ -49,9 +49,11 @@ class User(object):
         return f"行:{self.row}\r\n用户id:{self.user_id}\r\n"
     
     def read(self, column:str):
-        print(f"self.database_path: {self.database_path}")
+        print(f"read column: {column}")
         database = pd.read_csv(self.database_path)
         data = database.at[self.row, column]
+        if str(data) == 'nan':
+            return None
         return data
         
     def _update(self):
@@ -95,8 +97,12 @@ class User(object):
     
     def write(self, column:str, data) -> bool:
         '''向数据库内填写数据，同时更新自己的状态'''
+        
+        print(f"write column: {column}, data: {data}")
+        
         if self.row == None:
             return False
+        
         
         database = pd.read_csv(self.database_path)
         database.at[self.row, column] = data

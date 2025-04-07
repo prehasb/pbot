@@ -54,7 +54,7 @@ async def handle_buy(event: MessageEvent, arg: Message = CommandArg()):
     msg = io.buy(item_name, number)
     
     if msg == "":
-        await buy.finish(f"不存在该道具[{item_name}]")
+        await buy.finish()
     
     await buy.finish(message=msg, at_sender = True)
 
@@ -80,6 +80,9 @@ async def handle_use(event: MessageEvent, arg: Message = CommandArg()):
     
     io = ItemOperation(user_id=user_id)
     msg = io.use(item_name, number)
+    
+    if msg == "":
+        await buy.finish()
     
     await use.finish(message=msg, at_sender = True)
 

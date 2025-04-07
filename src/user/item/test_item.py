@@ -24,12 +24,12 @@ class test_item(Item):
         get_cry = num*1
         msg += f"你获得了{get_cry}个水晶"
         p = Pet(self.user_id)
-        p.giveCry(get_cry)
+        p.addCry(get_cry)
         
         return msg
     
     @classmethod
-    def descripe(self):
+    def describe(self):
         msg = ""
         msg += "\r\n智商检测器"
         msg += "\r\n使用该道具来检测自己的智商吧，使用后可以获得1个水晶哦"

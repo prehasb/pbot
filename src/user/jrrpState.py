@@ -36,14 +36,14 @@ class jrrpState(User):
         super()._update() # 更新父类
         
         # 更新jrrp_value(进行空检测)
-        if str(self.read(JRRP)) == "nan":
+        if self.read(JRRP) == None:
             self.value = -1
         else:
             self.value = int(self.read(JRRP))
         
         # 更新next_time(进行空检测)
         date_format = "%Y-%m-%d %H:%M:%S"
-        if str(self.read(JRRPTIME)) == "nan":
+        if self.read(JRRPTIME) == None:
             self.next_time = datetime.strptime(TIME_NAN, date_format)
         else:
             self.next_time = datetime.strptime(self.read(JRRPTIME), date_format)

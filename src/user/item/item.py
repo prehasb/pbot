@@ -11,6 +11,7 @@ MAX_NUMBER = "max_number"
 NAME_IN_USERITEM = "name_in_useritem"
 HAS_STATE = "has_state"
 CAN_USE = "can_use"
+CAN_BUY = "can_buy"
 
 class Item(User):
     '''item抽象类'''
@@ -27,8 +28,8 @@ class Item(User):
         '''更新自己的状态'''
         super()._update()
         name_in_useritem = self.getNameinUseritem()
-        t=str(self.read(name_in_useritem))
-        if t == "nan":
+        t=self.read(name_in_useritem)
+        if t == None:
             self.number = 0
             self.write(name_in_useritem, 0)
         else:
@@ -38,21 +39,22 @@ class Item(User):
             return
         
         state_column = self.getStateNameinUseritem()
-        t=str(self.read(state_column))
-        if t == "nan":
-            self.state = 0
-            self.write(state_column, 0)
+        t=self.read(state_column)
+        if t == None:
+            self.state = int(0)
+            self.write(state_column, self.state)
         else:
             self.state = int(float(t))
         
     def isEnough(self, num) -> bool:
         '''判断物品是否足够num个'''
-        if self.number >= num:
+        if self.number >= num and num > 0:
             return True
         else:
             return False
         
     def use(self, num) -> str:
+        '''消耗性使用，减去num个物品。若无物品，返回"提示道具不足"的语句'''
         msg = ""
         
         if num <= 0:
@@ -71,18 +73,22 @@ class Item(User):
     
     def changeState(self, state:int) -> str:
         msg = ""
-        if self.state == 0 or state > self.state: # 不存在状态或超出最大状态
-            return msg
-        
         self.state = state
         self.write(self.getStateNameinUseritem(), state)
-        msg += f"已改变状态为：{self.getStateName(state)}"
+        msg += f"已改变状态，目前{self.getName()}的状态为：{self.getStateName(state)}"
+        return msg
+    
+    @classmethod
+    def getNamebyId(self, item_id) -> str:
+        '''查询道具名称'''
+        item_table = pd.read_csv(ITEM_TABLE_PATH, encoding="gb2312")
+        name = item_table.at[item_id, NAME]
+        return name
     
     @classmethod
     def getName(self) -> str:
         '''查询道具名称'''
-        item_table = pd.read_csv(ITEM_TABLE_PATH, encoding="gb2312")
-        name = item_table.at[self.item_id, NAME]
+        name = self.getNamebyId(self.item_id)
         return name
     
     @classmethod
@@ -100,6 +106,16 @@ class Item(User):
     def getStateNameinUseritem(self) -> str:
         return self.getNameinUseritem() + "_state"
     
+    @classmethod
+    def canBuy(self) -> bool:
+        item_table = pd.read_csv(ITEM_TABLE_PATH, encoding="gb2312")
+        print("item_table:", item_table)
+        print("item_table.at[self.item_id, CAN_BUY]", item_table.at[self.item_id, CAN_BUY])
+        can_buy = bool(item_table.at[self.item_id, CAN_BUY])
+        print(self.item_id,":",can_buy)
+        return can_buy
+    
+    @classmethod
     def getStateName(self, state) -> str:
         '''物品状态对应名称，请在内部定义'''
         pass
@@ -110,16 +126,16 @@ class Item(User):
         max_number = int(item_table.at[self.item_id, MAX_NUMBER])
         return max_number
     
-    def isCanUse(self) -> bool:
+    def canUse(self) -> bool:
         '''查询道具是否可以使用'''
         item_table = pd.read_csv(ITEM_TABLE_PATH, encoding="gb2312")
         can_use = bool(item_table.at[self.item_id, CAN_USE])
         return can_use
     
-    def hasState(self) -> bool:
+    def hasState(self) -> int:
         '''查询道具是否具有状态'''
         item_table = pd.read_csv(ITEM_TABLE_PATH, encoding="gb2312")
-        has_state = bool(item_table.at[self.item_id, HAS_STATE])
+        has_state = int(item_table.at[self.item_id, HAS_STATE])
         return has_state
     
     @classmethod

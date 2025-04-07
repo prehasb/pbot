@@ -5,8 +5,8 @@ EXPBALL_ID = 4
 
 class expSaveBall(Item):
     item_id = EXPBALL_ID
-    max_exp_per_ball:int = 10000
-    gain_exp_per_ball:int = 100000
+    max_exp_per_ball:int = 25000
+    gain_exp_per_ball:int = 250000
     
     def __init__(self, user_id:int):
         super(expSaveBall, self).__init__(user_id=user_id, item_id=EXPBALL_ID)
@@ -25,20 +25,25 @@ class expSaveBall(Item):
         
         p = Pet(self.user_id)
         
-        get_exp = num*self.gain_exp_per_ball
+        get_exp = num*self.getGainExp()
         msg += p.addExp(get_exp)
         
         return msg
     
     def getAddMaxExp(self) -> int:
-        add_max_exp = self.number * self.max_exp_per_ball
+        max_exp_per_ball = self.max_exp_per_ball
+        add_max_exp = self.number * max_exp_per_ball
         return add_max_exp
     
+    def getGainExp(self) -> int:
+        add_exp_ball = self.gain_exp_per_ball
+        return add_exp_ball
+    
     @classmethod
-    def descripe(self):
+    def describe(self):
         msg = ""
         msg += "\r\n经验球"
-        msg += "\r\n使用该道具来增加自己的最大存储吧。"
-        msg += f"\r\n每个经验球可以增加{self.max_exp_per_ball}点最大存储经验值。"
+        msg += f"\r\n持有每个经验球可以增加{self.max_exp_per_ball}点最大存储经验值。"
+        msg += f"\r\n经验球也可以被使用，使用后获得{self.gain_exp_per_ball}点经验。"
         return msg
     

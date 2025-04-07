@@ -52,16 +52,16 @@ class Pet(User):
         super()._update()
         # 更新 level
         
-        t=str(self.read(PET_LEVEL))
-        if t == "nan":
+        t=self.read(PET_LEVEL)
+        if t == None:
             self.level = 1
             self.write(PET_LEVEL, self.level)
         else:
             self.level = int(float(t))
         
         # 更新 exp
-        t=str(self.read(PET_EXP))
-        if str(t) == "nan":
+        t=self.read(PET_EXP)
+        if t == None:
             self.exp = 0
             self.write(PET_EXP, self.exp)
         else:
@@ -69,33 +69,32 @@ class Pet(User):
         
         # 更新 
         # feeded_cry:int = None
-        t=str(self.read(FEEDED_CRY))
-        if str(t) == "nan":
+        t=self.read(FEEDED_CRY)
+        if t == None:
             self.feeded_cry = 0
             self.write(FEEDED_CRY, self.feeded_cry)
         else:
             self.feeded_cry = int(float(t))
         
-        
         # 更新 factory_level
-        t=str(self.read(FAC_LEVEL))
-        if str(t) == "nan":
+        t=self.read(FAC_LEVEL)
+        if t == None:
             self.factory_level = 1
             self.write(FAC_LEVEL, self.factory_level)
         else:
             self.factory_level = int(float(t))
             
         # 更新 crystal_num
-        t=str(self.read(CRY_NUM))
-        if str(t) == "nan":
+        t=self.read(CRY_NUM)
+        if t == None:
             self.crystal_num = 1
             self.write(CRY_NUM, self.crystal_num)
         else:
             self.crystal_num = int(float(t))
         
         # 更新 last_lookup_time (进行空检测)
-        t = str(self.read(LAST_LOOKUP_TIME))
-        if str(t) == "nan":
+        t = self.read(LAST_LOOKUP_TIME)
+        if t == None:
             self.last_lookup_time = dt.datetime.now().replace(microsecond=0)
             self.write(LAST_LOOKUP_TIME, self.last_lookup_time)
         else:
@@ -163,17 +162,22 @@ class Pet(User):
         self.write(CRY_NUM, self.crystal_num)
         self._update()
         return msg
-        
-    def giveCry(self, num) -> str:
-        self.crystal_num += num
-        self.write(CRY_NUM, self.crystal_num)
-        return f"已发放{num}个水晶"
     
     def addExp(self, exp) -> str:
         self.exp += exp
+        if self.exp < 0:
+            self.exp = 0
         self.write(PET_EXP, self.exp)
-        msg = f"已获得{exp}点exp"
+        msg = f"已获得{exp}点经验，现在你有{self.exp}点经验。"
         msg += self.levelupPet()
+        return msg
+    
+    def addCry(self, cry) -> str:
+        self.crystal_num += cry
+        if self.crystal_num < 0:
+            self.crystal_num = 0
+        self.write(CRY_NUM, self.crystal_num)
+        msg = f"已获得{cry}点水晶，现在你有{self.crystal_num}个水晶。"
         return msg
     
     def hasCry(self, num) ->bool:
@@ -184,7 +188,7 @@ class Pet(User):
         
     def useCry(self, num) -> str:
         if not self.hasCry(num):
-            msg = f"你没有足够的水晶！，你只有{self.crystal_num}个"
+            msg = f"你没有足够的水晶！你只有{self.crystal_num}个"
             return msg
         cry_before = self.crystal_num
         self.crystal_num -= num
@@ -262,14 +266,33 @@ class Pet(User):
     # 以下是get类型函数
     
     def _getFacrotyExpPs(self) -> int:
+        
+        # 20250323添加：经验吞噬者
+        #######################################################
+        from item.expEater import expEater
+        eater = expEater(self.user_id)
+        if eater.state == 1:
+            return 0
+        #######################################################
+        
         factory_table = pd.read_csv(FACTORY_TABLE_PATH, encoding="gb2312")
         expPs = factory_table.at[self.factory_level-1, EXP_PS]
-        return expPs
+        return int(expPs)
 
     def _getFacrotyCryPh(self) -> int:
+        
         factory_table = pd.read_csv(FACTORY_TABLE_PATH, encoding="gb2312")
         CryPh = factory_table.at[self.factory_level-1, CRY_PS]
-        return CryPh
+        
+        # 20250323添加：经验吞噬者
+        #######################################################
+        from item.expEater import expEater
+        eater = expEater(self.user_id)
+        if eater.state == 1:
+            CryPh*=2
+        #######################################################
+        
+        return int(CryPh)
         
     def getLevelUpExp(self) -> int:
         '''查询升级所需经验'''
@@ -286,7 +309,8 @@ class Pet(User):
     def getMaxSaveExp(self) -> int:
         '''查询最大存储经验'''
         factory_table = pd.read_csv(FACTORY_TABLE_PATH, encoding="gb2312")
-        max_save_exp = factory_table.at[self.factory_level-1, MAX_SAVE_EXP]
+        # max_save_exp = factory_table.at[self.factory_level-1, MAX_SAVE_EXP]
+        max_save_exp = factory_table.at[self.factory_level-1, MAX_SAVE_EXP]*20 # 20250407关服补偿
         
         # 20250322添加：经验存储球
         #######################################################

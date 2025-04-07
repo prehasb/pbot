@@ -92,6 +92,10 @@ class RandomVideo(object):
             return music_path
         audio = AudioSegment.from_file(music_path)
         total_duration = audio.duration_seconds
+        if clip_duration == -1:
+            cropped_audio = audio[0:total_duration*1000]
+            cropped_audio.export(output_path)
+            return output_path
         rand_start = rd.randint(0, int(total_duration-clip_duration))
         # audio = AudioSegment.from_file(clip_path, format="amr")
         start_time = rand_start * 1000  # 2s

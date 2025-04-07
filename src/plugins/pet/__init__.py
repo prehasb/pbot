@@ -7,6 +7,7 @@ from nonebot.plugin import PluginMetadata
 import random as rd
 import time as tm
 from user.pet import Pet
+from event.petEvent import petEvent
 import pandas as pd
 from nonebot.permission import SUPERUSER
 
@@ -44,12 +45,10 @@ async def handle_ck(event: MessageEvent):
     
     # 1、根据当前时间差获取玛德琳等级和水晶
     p = Pet(user_id)
-    exp_num = p.getExpNum()
-    cry_num = p.getCryNum()
     # at_segment = MessageSegment.at(user_id)
     
     msg = ""
-    msg += f"\r\n- 待领取: {exp_num}/{p.getMaxSaveExp()}经验值，{cry_num}冲刺水晶"
+    msg += f"\r\n- 待领取: {p.getExpNum()}/{p.getMaxSaveExp()}经验值(经验值上限翻10倍，补偿持续到4月8日23:59分)，{p.getCryNum()}冲刺水晶"
     msg += f"\r\n- 当前玛德琳: lv{p.level} {p.getName()}"
     if p.getImagePath() != None:
         msg += MessageSegment.image(file=p.getImagePath())
@@ -62,7 +61,7 @@ async def handle_ck(event: MessageEvent):
     await ck.finish(message=msg, at_sender=True)
 
 
-takeall = on_command("takeall")
+takeall = on_command("takeall", aliases={"take"})
 
 @takeall.handle()
 async def handle_takeall(event: MessageEvent):
@@ -84,7 +83,6 @@ async def handle_takeall(event: MessageEvent):
     
     # 3、显示升级信息
     await takeall.finish(message=msg, at_sender = True)
-
 
 build = on_command("build")
 
@@ -115,7 +113,7 @@ async def handle_feed(event: MessageEvent, arg: Message = CommandArg()):
     
     if args[0] == "all":
         feed_cry_num = p.getLevelUpCry() - p.feeded_cry
-        if feed_cry_num == 0:
+        if feed_cry_num <= 0:
             feed_cry_num = 1 # all 特殊处理:若feednum=0，置1让函数返回不想吃水晶的语句
     else:
         feed_cry_num = int(args[0])
@@ -179,6 +177,25 @@ async def show_hander(event: MessageEvent, arg: Message = CommandArg()):
         msg += MessageSegment.image(file=p.getImagePathbyLevel(level=level))
     
     await show.finish(message=msg, at_sender = True)
+
+# letter = on_command("letter")
+letter = on_command("letter")
+
+@letter.handle()
+async def letter_hander(event: MessageEvent):
     
+    # 0、获取用户id
+    user_id = event.user_id
     
+    pe = petEvent(user_id)
+    
+    if not pe.canActivate():
+        msg = pe.cantActivateText()
+        await letter.finish(message=msg, at_sender = True) 
+    
+    msg = pe.activate()
+    image = pe.getImagePATH()
+    if image != None:
+        msg += MessageSegment.image(file=image)
+    await letter.finish(message=msg, at_sender = True)
     
