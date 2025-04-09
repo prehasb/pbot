@@ -57,7 +57,7 @@ async def handle_jrrp(event: MessageEvent):
     # 4、转化随机数为输出
     state.set_jrrp(randint)
     msg="你的jrrp值为：" + str(randint) + "。" + state.get_jrrp_text()
-    msg += "\r\n" + p.addExpbyJRRP(randint)
+    msg += p.addExpbyJRRP(randint)
     await jrrp.finish(message=msg, at_sender = True)
 
 

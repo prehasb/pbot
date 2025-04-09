@@ -48,7 +48,6 @@ class jrrpState(User):
         else:
             self.next_time = datetime.strptime(self.read(JRRPTIME), date_format)
         
-        
     def set_next_time(self):
         '''设置下次jrrp的时间阈值'''
         # 1、获取当前时间

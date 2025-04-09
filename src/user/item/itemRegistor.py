@@ -5,9 +5,9 @@ from item.expEater import expEater
 from item.junkFood import junkFood
 from item.item1a import item1a
 from item.item2a import item2a
-from item.crystalHeart import crystalHeart
-from item.crystalHeartGlide import crystalHeartGlide
-from item.crystalHeartJaded import crystalHeartJaded
+from item.crystalHeart.crystalHeart import crystalHeart
+from item.crystalHeart.crystalHeartGlide import crystalHeartGlide
+from item.crystalHeart.crystalHeartJaded import crystalHeartJaded
 
 from item.item import Item
 
@@ -23,11 +23,11 @@ ITEM_CLASS_MAPPING:dict[str, Item] = {
     "crystalHeartJaded": crystalHeartJaded,
 }
 
-ITEM_IN_LETTER:list = {
-    "test_item",
-    "expSaveBall",
-    "crystalHeartGlide",
-    "crystalHeartJaded",
-}
+# ITEM_IN_LETTER:list = {
+#     "test_item",
+#     "expSaveBall",
+#     "crystalHeartGlide",
+#     "crystalHeartJaded",
+# }
 
 

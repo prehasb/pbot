@@ -119,7 +119,13 @@ class ItemOperation(User):
         
         son_item.write(son_item.getNameinUseritem(), son_item.number)
         
-        msg += f"已给予{num}个{name}"
+        gain_text = "获得"
+        show_num = num
+        if num < 0:
+            gain_text = "失去"
+            show_num = -num
+        
+        msg += f"\r\n已{gain_text}{show_num}个{name}，现在你有{son_item.number}个{name}"
         return msg
     
     

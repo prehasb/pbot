@@ -1,4 +1,4 @@
-﻿from item.crystalHeart import crystalHeart
+﻿from item.crystalHeart.crystalHeart import crystalHeart
 NAME_IN_USERITEM = "crystalHeartGlide"
 
 ID = 10

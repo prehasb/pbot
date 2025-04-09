@@ -7,7 +7,7 @@ import os
 from User import User
 from item.item import Item
 from item.itemOperation import ItemOperation
-from item.itemRegistor import ITEM_IN_LETTER
+# from item.itemRegistor import ITEM_CLASS_MAPPING
 
 NEXT_EVENT_TIME = "next_event_time"
 LAST_EVENT_ID = "last_event_id"
@@ -26,6 +26,7 @@ NEXT_TIME = "next_time"
 IS_FIRST_EVENT = "is_first_event"
 NEXT_EVENT = "next_event"
 CHOOSE = "choose"
+ITEM = "item"
 
 NT_int = 30
 # NT_int = 0
@@ -72,11 +73,16 @@ class petEvent(User):
         now_time = datetime.now()
         if now_time < self.next_event_time:
             return False
-        
         return True
     
     def cantActivateText(self) -> str:
-        return "\r\n你的玛德琳还没有给你寄信！"
+        msg = ""
+        msg += "\r\n你的玛德琳还没有给你寄信！"
+        msg += "\r\n你记得上次收信的时间是："
+        next_time = self.readEventTablebyID(self.last_event_id, NEXT_TIME)
+        last_time = self.next_event_time - dt.timedelta(minutes=next_time)
+        msg += str(last_time)
+        return msg
     
     def activate(self) -> str:
         '''激活事件'''
@@ -93,30 +99,23 @@ class petEvent(User):
         
         from pet import Pet
         p = Pet(user_id=self.user_id)
-        gain_text = {1:"获得", -1:"失去"}
         
         exp = self.getExp()
         if not exp == 0:
-            p.addExp(exp)
-            po = self.positive(exp)
-            msg += f"\r\n你{gain_text.get(po)}了{exp*po}点经验值，现在你有{p.exp}点经验值。"
+            msg += p.addExp(exp)
             
         cry = self.getCry()
         if not cry == 0:
-            p.addCry(cry)
-            po = self.positive(cry)
-            msg += f"\r\n你{gain_text.get(po)}了{cry*po}个水晶，现在你有{p.crystal_num}个水晶。"
+            msg += p.addCry(cry)
         
         d = self.getItemDict()
         
         for name_in_useritem in d.keys():
             if d[name_in_useritem] != 0:
                 num = d[name_in_useritem]
-                po = self.positive(num)
                 name = ItemOperation.getNamebyNameInUseritem(name_in_useritem)
                 io = ItemOperation(user_id=self.user_id)
-                io.give(name, num)
-                msg += f"\r\n你{gain_text.get(po)}了{num*po}个{name}。"
+                msg += io.give(name, num)
         
         self.write(NEXT_EVENT_TIME, self.getNextTime())
         self.write(LAST_EVENT_ID, self.event_id)
@@ -191,14 +190,19 @@ class petEvent(User):
         return int(cry)
     
     def getItemDict(self) -> dict[str, int]:
-        l = ITEM_IN_LETTER
-        print("l:", l)
-        d = dict()
-        for column in l:
-            num = int(self.readEventTable(column))
-            if num != 0:
-                d[column] = num
-        return d
+        '''获取道具与其对应的字典:{name_in_useritem:number}'''
+        item_str:str = self.readEventTable(NEXT_TIME)
+        if item_str == 0:
+            return dict()
+        
+        item_str_list = item_str.split("|") #["test_item:5", "expSaveBall:2"]
+        item_dict = dict()
+        
+        for i in item_str_list:
+            parts = i.split(':') # parts = ["test_item","5"]
+            if len(parts) == 2:
+                item_dict[parts[0]] = int(parts[1])
+        return item_dict
     
     @classmethod
     def isFirstEventbyId(self, id) -> bool:
@@ -219,9 +223,10 @@ class petEvent(User):
     def getNextEventDict(self) -> dict:
         '''获取可能的下一个事件字典:{id:priority}'''
         event_table = pd.read_csv(EVENT_TABLE_PATH, encoding="gb2312")
-        next_event = str(event_table.at[self.last_event_id, NEXT_EVENT]) # 3|4|5 或 nan
-        if next_event == "nan":
-            return []
+        next_event = self.readEventTablebyID(self.last_event_id, NEXT_EVENT) # 3|4|5 或 nan
+        if next_event == 0:
+            return dict()
+        
         next_event_list = [int(x) for x in next_event.split("|")] #[3,4,5]
         next_event_dict = dict()
         for id in next_event_list:
@@ -231,7 +236,7 @@ class petEvent(User):
             p = int(p)
             if p != 0:
                 next_event_dict[id] = p
-        return next_event_dict
+        return next_event_dict #{3:500,4:400,5:100}
     
     def pickNextEvent(self) -> int:
         next_event_dict = self.getNextEventDict()
@@ -243,7 +248,7 @@ class petEvent(User):
     @classmethod
     def pickRandomIDinDict(self, d:dict) -> int:
         '''通过字典的权重随机选择一个id，若表为空，返回0'''
-        # 数据格式：d = {1:1, 5:1, 10:2, 11:1}
+        # 数据格式：d[id, priotiry] = {1:1, 5:1, 10:2, 11:1}
         
         sum_p = 0
         for id in d.keys():
@@ -260,12 +265,16 @@ class petEvent(User):
         
         return event_id
     
-    def readEventTable(self, column):
+    @classmethod
+    def readEventTablebyID(self, id, column):
         event_table = pd.read_csv(EVENT_TABLE_PATH, encoding="gb2312")
-        var = event_table.at[self.event_id, column]
+        var = event_table.at[id, column]
         if str(var) == "nan":
             return 0
         return var
+    
+    def readEventTable(self, column):
+        return self.readEventTablebyID(self.event_id, column)
     
     def positive(self, num:int) -> int:
         if num > 0:

@@ -168,7 +168,14 @@ class Pet(User):
         if self.exp < 0:
             self.exp = 0
         self.write(PET_EXP, self.exp)
-        msg = f"已获得{exp}点经验，现在你有{self.exp}点经验。"
+        
+        show_exp = exp
+        gain_text = "获得"
+        if exp < 0:
+            show_exp = -exp
+            gain_text = "失去"
+        
+        msg = f"\r\n已{gain_text}{show_exp}点经验，现在你有{self.exp}点经验。"
         msg += self.levelupPet()
         return msg
     
@@ -177,7 +184,14 @@ class Pet(User):
         if self.crystal_num < 0:
             self.crystal_num = 0
         self.write(CRY_NUM, self.crystal_num)
-        msg = f"已获得{cry}点水晶，现在你有{self.crystal_num}个水晶。"
+        
+        show_cry = cry
+        gain_text = "获得"
+        if cry < 0:
+            show_cry = -cry
+            gain_text = "失去"
+        
+        msg = f"\r\n已{gain_text}{show_cry}点水晶，现在你有{self.crystal_num}个水晶。"
         return msg
     
     def hasCry(self, num) ->bool:
@@ -213,11 +227,12 @@ class Pet(User):
         return msg
     
     def addExpbyJRRP(self, jrrp:int) -> str:
+        '''根据jrrp值增加exp'''
         # add_exp = int(jrrp*0.01*(self.getLevelUpExp()))*2
-        add_exp = int(jrrp*0.01*self.getMaxSaveExp())
-        min_exp = int(jrrp*0.001*(self.getLevelUpExp())*2)
-        if add_exp < min_exp :
-            add_exp = min_exp
+        add_exp = int(jrrp*0.01*self.getOriginMaxSaveExp())
+        # min_exp = int(jrrp*0.001*(self.getLevelUpExp())*2)
+        # if add_exp < min_exp :
+        #     add_exp = min_exp
         self.exp += add_exp
         self.write(PET_EXP, self.exp)
         msg = f"\r\n已领取{add_exp}点经验值！"
@@ -309,8 +324,8 @@ class Pet(User):
     def getMaxSaveExp(self) -> int:
         '''查询最大存储经验'''
         factory_table = pd.read_csv(FACTORY_TABLE_PATH, encoding="gb2312")
-        # max_save_exp = factory_table.at[self.factory_level-1, MAX_SAVE_EXP]
-        max_save_exp = factory_table.at[self.factory_level-1, MAX_SAVE_EXP]*20 # 20250407关服补偿
+        max_save_exp = factory_table.at[self.factory_level-1, MAX_SAVE_EXP]
+        # max_save_exp = factory_table.at[self.factory_level-1, MAX_SAVE_EXP]*20 # 20250407关服补偿
         
         # 20250322添加：经验存储球
         #######################################################
@@ -320,6 +335,13 @@ class Pet(User):
         #######################################################
         
         return int(max_save_exp)
+    
+    def getOriginMaxSaveExp(self) -> int:
+        '''查询原始最大存储经验'''
+        factory_table = pd.read_csv(FACTORY_TABLE_PATH, encoding="gb2312")
+        max_save_exp = factory_table.at[self.factory_level-1, MAX_SAVE_EXP]
+        return int(max_save_exp)
+        
     
     @classmethod
     def getNamebyLevel(self, level:int) -> str:

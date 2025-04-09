@@ -48,7 +48,8 @@ async def handle_ck(event: MessageEvent):
     # at_segment = MessageSegment.at(user_id)
     
     msg = ""
-    msg += f"\r\n- 待领取: {p.getExpNum()}/{p.getMaxSaveExp()}经验值(经验值上限翻10倍，补偿持续到4月8日23:59分)，{p.getCryNum()}冲刺水晶"
+    # msg += f"\r\n- 待领取: {p.getExpNum()}/{p.getMaxSaveExp()}经验值(经验值上限翻10倍，补偿持续到4月8日23:59分)，{p.getCryNum()}冲刺水晶"
+    msg += f"\r\n- 待领取: {p.getExpNum()}/{p.getMaxSaveExp()}经验值，{p.getCryNum()}冲刺水晶"
     msg += f"\r\n- 当前玛德琳: lv{p.level} {p.getName()}"
     if p.getImagePath() != None:
         msg += MessageSegment.image(file=p.getImagePath())
@@ -178,8 +179,8 @@ async def show_hander(event: MessageEvent, arg: Message = CommandArg()):
     
     await show.finish(message=msg, at_sender = True)
 
-# letter = on_command("letter")
 letter = on_command("letter")
+# letter = on_command("letter", permission=SUPERUSER)
 
 @letter.handle()
 async def letter_hander(event: MessageEvent):
