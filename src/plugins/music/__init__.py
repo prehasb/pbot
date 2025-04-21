@@ -32,6 +32,8 @@ guess_state = False
 total_ans = 0
 begin_time = datetime.now() - dt.timedelta(seconds=30)
 
+CRY_AWARD = 3
+
 def isXsLastTime(last_time: datetime, scnds):
     current_time = datetime.now()
     if current_time - last_time > dt.timedelta(seconds=scnds):
@@ -118,12 +120,12 @@ async def handle_guess(event: GroupMessageEvent, arg: Message = CommandArg()):
         p = Pet(user_id=user_id)
         
         guess_state = False
-        msg = f"正确，答案是{RandomVideo.getName(index_now)}\r\n"
-        msg += p.addCry(1)
+        msg = f"正确，答案是{RandomVideo.getName(index_now)}"
+        msg += p.addCry(CRY_AWARD)
         await guess.finish(message=msg, at_sender=True)
     else:
         total_ans+=1
-        if total_ans >5:
+        if total_ans > 5:
             msg= "你们的猜测是错误的！"
             total_ans = 0
             await guess.send(message=msg)

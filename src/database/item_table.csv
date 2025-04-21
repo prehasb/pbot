@@ -10,3 +10,5 @@ item_id,name,name_in_useritem,price,max_number,has_state,can_use,can_buy
 8,水晶之心,crystalHeart,99999,9999,0,TRUE,FALSE
 9,水晶之心：雨落玫瑰,crystalHeartGlide,99999,9999,0,TRUE,FALSE
 10,水晶之心：意面力,crystalHeartJaded,99999,9999,0,TRUE,FALSE
+11,植物标本,herbarium,99999,9999,0,TRUE,FALSE
+12,水晶之心：创生之柱,crystalHeartStartfruit,99999,9999,0,TRUE,FALSE

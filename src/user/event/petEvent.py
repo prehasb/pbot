@@ -22,7 +22,7 @@ MAX_LEVEL = "max_level"
 P = "priority"
 EXP = "exp"
 CRY = "cry"
-NEXT_TIME = "next_time"
+TIME_DELAY = "next_time"
 IS_FIRST_EVENT = "is_first_event"
 NEXT_EVENT = "next_event"
 CHOOSE = "choose"
@@ -52,7 +52,7 @@ class petEvent(User):
             self.write(NEXT_EVENT_TIME, self.next_event_time)
         else:
             self.next_event_time = datetime.strptime(t, TIME_FORMAT)
-            
+        
         # 更新 next_event_time (进行空检测)
         t = self.read(NEXT_EVENT_TIME)
         if t == None:
@@ -79,8 +79,10 @@ class petEvent(User):
         msg = ""
         msg += "\r\n你的玛德琳还没有给你寄信！"
         msg += "\r\n你记得上次收信的时间是："
-        next_time = self.readEventTablebyID(self.last_event_id, NEXT_TIME)
-        last_time = self.next_event_time - dt.timedelta(minutes=next_time)
+        time_delay = int(self.readEventTablebyID(self.last_event_id, TIME_DELAY))
+        if time_delay == 0:
+            time_delay = NT_int
+        last_time = self.next_event_time - dt.timedelta(minutes=time_delay)
         msg += str(last_time)
         return msg
     
@@ -103,22 +105,20 @@ class petEvent(User):
         exp = self.getExp()
         if not exp == 0:
             msg += p.addExp(exp)
-            
+        
         cry = self.getCry()
         if not cry == 0:
             msg += p.addCry(cry)
         
         d = self.getItemDict()
         
-        for name_in_useritem in d.keys():
-            if d[name_in_useritem] != 0:
-                num = d[name_in_useritem]
-                name = ItemOperation.getNamebyNameInUseritem(name_in_useritem)
-                io = ItemOperation(user_id=self.user_id)
-                msg += io.give(name, num)
-        
-        self.write(NEXT_EVENT_TIME, self.getNextTime())
-        self.write(LAST_EVENT_ID, self.event_id)
+        if d:
+            for name_in_useritem in d.keys():
+                if d[name_in_useritem] != 0:
+                    num = d[name_in_useritem]
+                    name = ItemOperation.getNamebyNameInUseritem(name_in_useritem)
+                    io = ItemOperation(user_id=self.user_id)
+                    msg += io.give(name, num)
         
         return msg
     
@@ -130,6 +130,11 @@ class petEvent(User):
                 return None
         file_image_path = "file:///" + image_path
         return file_image_path
+    
+    def setNextTime(self, time_delay = 0) -> str:
+        next_time = self.getNextTime(time_delay)
+        self.write(NEXT_EVENT_TIME, next_time)
+        self.write(LAST_EVENT_ID, self.event_id)
     
     @classmethod
     def getFirstEventDict(self) -> dict:
@@ -163,11 +168,12 @@ class petEvent(User):
         description = str(self.readEventTable(DESCRIPTION))
         return description
     
-    def getNextTime(self) -> datetime:
-        next_time = self.readEventTable(NEXT_TIME)
-        if next_time == 0:
-            next_time = NT_int
-        next_time = datetime.now().replace(microsecond=0) + dt.timedelta(minutes=next_time)
+    def getNextTime(self, time_delay = 0) -> datetime:
+        if time_delay == 0:
+            time_delay = self.readEventTable(TIME_DELAY)
+            if time_delay == 0:
+                time_delay = NT_int
+        next_time = datetime.now().replace(microsecond=0) + dt.timedelta(minutes=time_delay)
         return next_time
     
     def getMinLevel(self) -> int:
@@ -191,12 +197,12 @@ class petEvent(User):
     
     def getItemDict(self) -> dict[str, int]:
         '''获取道具与其对应的字典:{name_in_useritem:number}'''
-        item_str:str = self.readEventTable(NEXT_TIME)
+        item_str:str = self.readEventTable(ITEM)
         if item_str == 0:
             return dict()
         
-        item_str_list = item_str.split("|") #["test_item:5", "expSaveBall:2"]
-        item_dict = dict()
+        item_str_list = item_str.split("|") # ["test_item:5", "expSaveBall:2"]
+        item_dict = dict() 
         
         for i in item_str_list:
             parts = i.split(':') # parts = ["test_item","5"]

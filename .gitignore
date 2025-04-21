@@ -10,7 +10,7 @@ src/database/database*.csv
 src/database/useritem*.csv
 src/database/global*.csv
 src/database/copy/
-
+新建文本文档.txt
 
 # 登录信息，防止泄露我的隐私
 keystore.json
@@ -20,6 +20,7 @@ pyproject.toml
 
 # image和music，减少仓库大小
 src/database/image/
+src/database/eventimage/
 src/database/music/
 
 # 配置环境

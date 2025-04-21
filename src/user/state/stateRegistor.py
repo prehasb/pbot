@@ -1,4 +1,4 @@
-﻿# 在此注册所有道具
+﻿# 在此注册所有状态
 from item.test_item import test_item
 from item.expSaveBall import expSaveBall
 from item.expEater import expEater
@@ -13,7 +13,7 @@ from item.starfruit.crystalHeartStartfruit import crystalHeartStartfruit
 
 from item.item import Item
 
-ITEM_CLASS_MAPPING:dict[str, Item] = {
+STATE_CLASS_MAPPING:dict[str, Item] = {
     "test_item": test_item,
     "expSaveBall": expSaveBall,
     "expEater": expEater,

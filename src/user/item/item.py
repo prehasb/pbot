@@ -148,7 +148,7 @@ class Item(User):
     @classmethod
     def describe(self) -> str:
         msg = ""
-        msg += f"\r\n暂无该道具{self.getName}的描述"
+        msg += f"\r\n暂无该道具{self.getName()}的描述"
         return msg
 
     

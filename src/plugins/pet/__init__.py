@@ -57,7 +57,7 @@ async def handle_ck(event: MessageEvent):
     if p.getLevelUpCry() > 0:
         msg += f"\r\n- 你的玛德琳想吃{p.feeded_cry}/{p.getLevelUpCry()}个水晶。"
     msg += f"\r\n- 工厂等级为: {p.getFacName()}，升级所需水晶数量为{p.getFacLevelupCry()}"
-    msg += f"\r\n- 工厂每秒加工{p._getFacrotyExpPs()}点经验值，每小时生产{p._getFacrotyCryPh()}个冲刺水晶"
+    msg += f"\r\n- 工厂每秒加工{p.getFacrotyExpPs()}点经验值，每小时生产{p.getFacrotyCryPh()}个冲刺水晶"
     
     await ck.finish(message=msg, at_sender=True)
 
@@ -97,9 +97,8 @@ async def handle_build(event: MessageEvent):
     msg = p.levelupFac()
     
     await build.finish(message=msg, at_sender = True)
-    
 
-feed = on_command("feed")    
+feed = on_command("feed")
 
 @feed.handle()
 async def handle_feed(event: MessageEvent, arg: Message = CommandArg()):
@@ -129,7 +128,7 @@ async def handle_feed(event: MessageEvent, arg: Message = CommandArg()):
         await feed.finish()
     
     await feed.finish(message=msg, at_sender = True)
-    
+
 giveall = on_command("全服发放", permission=SUPERUSER)
 
 @giveall.handle()
@@ -148,7 +147,7 @@ async def handle_feed(event: MessageEvent, arg: Message = CommandArg()):
         db.at[row, "crystal_num"] += give_cry_num
     db.to_csv(DATABASE_PATH, index=False)
     await giveall.finish(message=f"已分发{give_cry_num}水晶")
-    
+
 show = on_command("show")
 
 @show.handle()
@@ -198,5 +197,6 @@ async def letter_hander(event: MessageEvent):
     image = pe.getImagePATH()
     if image != None:
         msg += MessageSegment.image(file=image)
+    pe.setNextTime()
     await letter.finish(message=msg, at_sender = True)
     

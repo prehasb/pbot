@@ -109,7 +109,7 @@ class Pet(User):
         return False
         
     def levelupPet(self) -> str:
-        '''按下升级按钮，累计升级'''
+        '''按下升级按钮，累计升级，返回升级提示。不满足升级条件，则不返回任何提示。'''
         msg = ""
         leveluped = False
         get_cry_num = 0
@@ -211,6 +211,7 @@ class Pet(User):
         return msg
         
     def levelupFac(self) -> str:
+        "扣除水晶，升级工厂，返回消息。若水晶不够，给出提示。"
         msg = ""
         if self.crystal_num >= self.getFacLevelupCry():
             self.crystal_num -= self.getFacLevelupCry()
@@ -218,10 +219,12 @@ class Pet(User):
             self.write(CRY_NUM, self.crystal_num)
             self.write(FAC_LEVEL, self.factory_level)
             msg = f'你成功升级了工厂，现在你的工厂等级为: 冲刺水晶工厂lv{self.factory_level}'
-            if self._getFacrotyExpPs()>0:
-                msg += f'\r\n每秒产出{self._getFacrotyExpPs()}点经验'
-            if self._getFacrotyCryPh()>0:
-                msg += f'\r\n每小时产出{self._getFacrotyCryPh()}个水晶'
+            expps = self.getFacrotyExpPs()
+            if expps > 0:
+                msg += f'\r\n每秒产出{expps}点经验'
+            cryph = self.getFacrotyCryPh()
+            if cryph > 0:
+                msg += f'\r\n每小时产出{cryph}个水晶'
         else:
             msg = '你的水晶不够让工厂升级！'
         return msg
@@ -280,32 +283,41 @@ class Pet(User):
     
     # 以下是get类型函数
     
-    def _getFacrotyExpPs(self) -> int:
-        
-        # 20250323添加：经验吞噬者
-        #######################################################
-        from item.expEater import expEater
-        eater = expEater(self.user_id)
-        if eater.state == 1:
-            return 0
-        #######################################################
+    def getFacrotyExpPs(self) -> int:
+        '''计算工厂每秒产生的经验值'''
         
         factory_table = pd.read_csv(FACTORY_TABLE_PATH, encoding="gb2312")
         expPs = factory_table.at[self.factory_level-1, EXP_PS]
-        return int(expPs)
-
-    def _getFacrotyCryPh(self) -> int:
         
-        factory_table = pd.read_csv(FACTORY_TABLE_PATH, encoding="gb2312")
-        CryPh = factory_table.at[self.factory_level-1, CRY_PS]
-        
-        # 20250323添加：经验吞噬者
+        # 20250323添加：经验吞噬者，经验值归零
         #######################################################
         from item.expEater import expEater
         eater = expEater(self.user_id)
         if eater.state == 1:
-            CryPh*=2
+            expPs = 0
         #######################################################
+        
+        return int(expPs)
+    
+    def getFacrotyCryPh(self) -> int:
+        '''计算工厂每小时产生的水晶数量'''
+        
+        factory_table = pd.read_csv(FACTORY_TABLE_PATH, encoding="gb2312")
+        CryPh = int(factory_table.at[self.factory_level-1, CRY_PS])
+        
+        # 20250418添加：宠物每升100级增加1水晶数量
+        #######################################################
+        CryPh += self.level//100
+        #######################################################
+        
+        # 20250323添加：经验吞噬者，水晶数量翻倍
+        #######################################################
+        from item.expEater import expEater
+        eater = expEater(self.user_id)
+        if eater.state == 1:
+            CryPh *= 2
+        #######################################################
+        
         
         return int(CryPh)
         
@@ -334,6 +346,12 @@ class Pet(User):
         max_save_exp += ball.getAddMaxExp()
         #######################################################
         
+        # 20250418添加：宠物每升一级增加经验值上限
+        #######################################################
+        MAX_EXP_PL = 100
+        max_save_exp += (self.level-1)*MAX_EXP_PL
+        #######################################################
+        
         return int(max_save_exp)
     
     def getOriginMaxSaveExp(self) -> int:
@@ -341,7 +359,6 @@ class Pet(User):
         factory_table = pd.read_csv(FACTORY_TABLE_PATH, encoding="gb2312")
         max_save_exp = factory_table.at[self.factory_level-1, MAX_SAVE_EXP]
         return int(max_save_exp)
-        
     
     @classmethod
     def getNamebyLevel(self, level:int) -> str:
@@ -353,7 +370,7 @@ class Pet(User):
     def getName(self) -> str:
         '''获取宠物名称'''
         return self.getNamebyLevel(level=self.level)
-
+    
     @classmethod
     def getImagePathbyLevel(self, level:int) -> str:
         '''获取宠物图片路径'''
@@ -381,7 +398,7 @@ class Pet(User):
         time_difference = current_time - self.last_lookup_time
         second_difference = int(time_difference.total_seconds())
         print(f"second_difference: {second_difference}")
-        expPs = self._getFacrotyExpPs()
+        expPs = self.getFacrotyExpPs()
         
         total_exp = second_difference * expPs
         if total_exp > self.getMaxSaveExp():
@@ -400,7 +417,7 @@ class Pet(User):
         time_difference = current_time_hour - last_lookup_time_hour
         second_difference = time_difference.total_seconds()
         hour_difference = int(second_difference//3600)
-        cryPh = self._getFacrotyCryPh()
+        cryPh = self.getFacrotyCryPh()
         return hour_difference * cryPh
     
     def getFacLevelupCry(self) -> int:

@@ -100,15 +100,15 @@ class User(object):
         
         print(f"write column: {column}, data: {data}")
         
-        if self.row == None:
-            return False
+        # if self.row == None:
+        #     return False
         
         
         database = pd.read_csv(self.database_path)
         database.at[self.row, column] = data
         database.to_csv(self.database_path, index=False)
         # self._update()
-        return True
+        # return True
 
 
 

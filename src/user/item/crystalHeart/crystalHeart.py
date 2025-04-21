@@ -3,13 +3,10 @@ NAME_IN_USERITEM = "crystalHeart"
 
 ID = 8
 CRY_NUM = 50
-NAME = "水晶之心"
-
 
 class crystalHeart(Item):
     item_id = ID
     gain_cry_per_heart:int = CRY_NUM
-    name = NAME
     
     def __init__(self, user_id:int, item_id = ID):
         super(crystalHeart, self).__init__(user_id=user_id, item_id=item_id)
