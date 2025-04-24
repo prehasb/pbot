@@ -5,8 +5,6 @@ ID = 6
 
 class item1a(Item):
     item_id = ID
-    max_exp_per_ball:int = 10000
-    gain_exp_per_ball:int = 100000
     
     def __init__(self, user_id:int):
         super(item1a, self).__init__(user_id=user_id, item_id=ID)

@@ -10,6 +10,8 @@ from item.crystalHeart.crystalHeartGlide import crystalHeartGlide
 from item.crystalHeart.crystalHeartJaded import crystalHeartJaded
 from item.starfruit.herbarium import herbarium
 from item.starfruit.crystalHeartStartfruit import crystalHeartStartfruit
+from item.email import email
+from item.hell.crystalHeartHell import crystalHeartHell
 
 from item.item import Item
 
@@ -25,6 +27,8 @@ ITEM_CLASS_MAPPING:dict[str, Item] = {
     "crystalHeartJaded": crystalHeartJaded,
     "herbarium": herbarium,
     "crystalHeartStartfruit": crystalHeartStartfruit,
+    "email" : email,
+    "crystalHeartHell": crystalHeartHell,
 }
 
 

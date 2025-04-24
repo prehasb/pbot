@@ -27,6 +27,7 @@ IS_FIRST_EVENT = "is_first_event"
 NEXT_EVENT = "next_event"
 CHOOSE = "choose"
 ITEM = "item"
+IMAGENAME = "imagename"
 
 NT_int = 30
 # NT_int = 0
@@ -79,7 +80,7 @@ class petEvent(User):
         msg = ""
         msg += "\r\n你的玛德琳还没有给你寄信！"
         msg += "\r\n你记得上次收信的时间是："
-        time_delay = int(self.readEventTablebyID(self.last_event_id, TIME_DELAY))
+        time_delay = self.getTimeDelayById(self.last_event_id)
         if time_delay == 0:
             time_delay = NT_int
         last_time = self.next_event_time - dt.timedelta(minutes=time_delay)
@@ -123,7 +124,10 @@ class petEvent(User):
         return msg
     
     def getImagePATH(self) -> str:
-        image_path = os.path.abspath(IMAGE_PATH) +"\\" + str(self.event_id) + ".png"
+        name = self.readEventTable(IMAGENAME)
+        if name == 0:
+            name = str(self.event_id)
+        image_path = os.path.abspath(IMAGE_PATH) +"\\" + name + ".png"
         if not os.path.exists(image_path):
             image_path = os.path.abspath(IMAGE_PATH) +"\\" + str(self.event_id) + ".jpg"
             if not os.path.exists(image_path):
@@ -131,8 +135,9 @@ class petEvent(User):
         file_image_path = "file:///" + image_path
         return file_image_path
     
-    def setNextTime(self, time_delay = 0) -> str:
-        next_time = self.getNextTime(time_delay)
+    def setNextTime(self, hard_set_delay = 0) -> str:
+        time_delay = self.getTimeDelay(hard_set_delay)
+        next_time = datetime.now().replace(microsecond=0) + dt.timedelta(minutes=time_delay)
         self.write(NEXT_EVENT_TIME, next_time)
         self.write(LAST_EVENT_ID, self.event_id)
     
@@ -168,13 +173,35 @@ class petEvent(User):
         description = str(self.readEventTable(DESCRIPTION))
         return description
     
-    def getNextTime(self, time_delay = 0) -> datetime:
+    # def getNextTime(self, hard_set_delay = 0) -> datetime:
+    #     '''获取下次收信的datetime格式时间'''
+    #     time_delay = self.getTimeDelay(hard_set_delay)
+    #     next_time = datetime.now().replace(microsecond=0) + dt.timedelta(minutes=time_delay)
+    #     return next_time
+    
+    def getTimeDelayById(self, id, hard_set_delay = 0):
+        '''获取延迟的时间。若存在硬性时间(!=0)，则无视任何道具设置为硬性时间'''
+        if hard_set_delay != 0:
+            return hard_set_delay
+        
+        time_delay = int(self.readEventTablebyID(id, TIME_DELAY))
+        
         if time_delay == 0:
-            time_delay = self.readEventTable(TIME_DELAY)
-            if time_delay == 0:
-                time_delay = NT_int
-        next_time = datetime.now().replace(microsecond=0) + dt.timedelta(minutes=time_delay)
-        return next_time
+            time_delay = NT_int
+        
+        # 20250422添加：电子邮件，缩短等待时间
+        #######################################################
+        from item.email import email
+        e = email(self.user_id)
+        if e.number:
+            time_delay -= e.skip_minute
+        #######################################################
+        
+        return time_delay
+    
+    def getTimeDelay(self, hard_set_delay = 0):
+        '''获取延迟的时间。若存在硬性时间(!=0)，则无视任何道具设置为硬性时间'''
+        return self.getTimeDelayById(self.event_id, hard_set_delay)
     
     def getMinLevel(self) -> int:
         min_level = self.readEventTable(MIN_LEVEL)
@@ -226,7 +253,7 @@ class petEvent(User):
             return 0
         return p
     
-    def getNextEventDict(self) -> dict:
+    def getNextEventDict(self) -> dict[int,int]:
         '''获取可能的下一个事件字典:{id:priority}'''
         event_table = pd.read_csv(EVENT_TABLE_PATH, encoding="gb2312")
         next_event = self.readEventTablebyID(self.last_event_id, NEXT_EVENT) # 3|4|5 或 nan
@@ -267,7 +294,7 @@ class petEvent(User):
             if random_number <= d[id]: # 1: randint = 2, 2:randing = 1
                 event_id = id # 2 event_id = 5
                 break
-            random_number -= d[id] #1: randing = 1
+            random_number -= d[id] #1: randint = 1
         
         return event_id
     

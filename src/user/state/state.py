@@ -1,13 +1,18 @@
-﻿from User import User
-import pandas as pd
+﻿import pandas as pd
+from User import User
 
 DATABASE_PATH = "./src/database/database.csv"
-STATE_ENDTIME = "state_end_time"
+STATE = "state"
 
 STATE_TABLE_PATH = "./src/database/state_table.csv"
 STATE_ID = "state_id"
 ENGLISG_NAME = "english_name"
 NAME = "name"
+
+import datetime as dt
+
+TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+TIME_NAN = "2000-01-01 00:00:00"
 
 class State(User):
     '''state抽象类'''
@@ -53,8 +58,45 @@ class State(User):
     
     def getEnglishName(self) -> str:
         '''查询英文名称'''
-        name_in_useritem = self.getEnglishNamebyId(self.state_id)
-        return name_in_useritem
+        return self.getEnglishNamebyId(self.state_id)
+    
+    def update(self):
+        '''根据时间更新状态，删除超时状态'''
+        state_info_str:str = self.read(STATE)
+        # state_info: "state1:2025-04-22 00:57:40|state2:5"
+        state_info_list:list = state_info_str.split("|")
+        # 格式1 状态:结束时间
+        _exist = False
+        for state_info in state_info_list:
+            state_info:str
+            s = state_info.split(":")
+            end_time:dt.datetime = dt.datetime.strptime(s[1], TIME_FORMAT)
+            now_time = dt.datetime.now()
+            if now_time > end_time:
+                # delete this state
+                pass
+        
+    
+    def exist(self) -> bool:
+        '''判断用户是否存在状态'''
+        self.update()
+        state_info_str:str = self.read(STATE)
+        # state_info: "state1:2025-04-22 00:57:40|state2:5"
+        state_info_list:list = state_info_str.split("|")
+        # 格式1 状态:结束时间
+        _exist = False
+        for state_info in state_info_list:
+            state_info:str
+            s = state_info.split(":")
+            state_name:str = s[0]
+            if state_name == self.getEnglishName():
+                _exist = True
+                break
+        
+        return _exist
+        
+        # 格式2 状态:剩余次数
+        
     
     @classmethod
     def describe(self) -> str:
