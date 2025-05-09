@@ -5,16 +5,18 @@ from item.expEater import expEater
 from item.junkFood import junkFood
 from item.item1a import item1a
 from item.item2a import item2a
+from item.email import email
+from item.starfruit.herbarium import herbarium
+
+# 水晶之心
 from item.crystalHeart.crystalHeart import crystalHeart
 from item.crystalHeart.crystalHeartGlide import crystalHeartGlide
 from item.crystalHeart.crystalHeartJaded import crystalHeartJaded
-from item.starfruit.herbarium import herbarium
 from item.starfruit.crystalHeartStartfruit import crystalHeartStartfruit
-from item.email import email
 from item.hell.crystalHeartHell import crystalHeartHell
+from item.crystalHeart.crystalHeartTerminal import crystalHeartTerminal
 
 from item.item import Item
-
 ITEM_CLASS_MAPPING:dict[str, Item] = {
     "test_item": test_item,
     "expSaveBall": expSaveBall,
@@ -29,6 +31,7 @@ ITEM_CLASS_MAPPING:dict[str, Item] = {
     "crystalHeartStartfruit": crystalHeartStartfruit,
     "email" : email,
     "crystalHeartHell": crystalHeartHell,
+    "crystalHeartTerminal": crystalHeartTerminal,
 }
 
 

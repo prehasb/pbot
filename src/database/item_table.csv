@@ -14,3 +14,4 @@ item_id,name,name_in_useritem,price,max_number,has_state,can_use,can_buy
 12,水晶之心：创生之柱,crystalHeartStartfruit,99999,9999,0,TRUE,FALSE
 13,电子邮箱,email,2500,1,0,FALSE,TRUE
 14,水晶之心：地狱之赴,crystalHeartHell,99999,9999,0,TRUE,FALSE
+15,水晶之心：终末,crystalHeartTerminal,99999,9999,0,TRUE,FALSE

@@ -121,6 +121,7 @@ class petEvent(User):
                     io = ItemOperation(user_id=self.user_id)
                     msg += io.give(name, num)
         
+        self.write(LAST_EVENT_ID, self.event_id)
         return msg
     
     def getImagePATH(self) -> str:
@@ -135,11 +136,13 @@ class petEvent(User):
         file_image_path = "file:///" + image_path
         return file_image_path
     
-    def setNextTime(self, hard_set_delay = 0) -> str:
-        time_delay = self.getTimeDelay(hard_set_delay)
+    def setNextTime(self, hard_set_delay:int = None) -> str:
+        time_delay = hard_set_delay
+        if hard_set_delay == None:
+            time_delay = self.getTimeDelay(hard_set_delay)
         next_time = datetime.now().replace(microsecond=0) + dt.timedelta(minutes=time_delay)
+        self.next_event_time = next_time
         self.write(NEXT_EVENT_TIME, next_time)
-        self.write(LAST_EVENT_ID, self.event_id)
     
     @classmethod
     def getFirstEventDict(self) -> dict:
@@ -172,16 +175,10 @@ class petEvent(User):
     def getDescription(self) -> str:
         description = str(self.readEventTable(DESCRIPTION))
         return description
-    
-    # def getNextTime(self, hard_set_delay = 0) -> datetime:
-    #     '''获取下次收信的datetime格式时间'''
-    #     time_delay = self.getTimeDelay(hard_set_delay)
-    #     next_time = datetime.now().replace(microsecond=0) + dt.timedelta(minutes=time_delay)
-    #     return next_time
-    
-    def getTimeDelayById(self, id, hard_set_delay = 0):
+        
+    def getTimeDelayById(self, id, hard_set_delay = None) -> int:
         '''获取延迟的时间。若存在硬性时间(!=0)，则无视任何道具设置为硬性时间'''
-        if hard_set_delay != 0:
+        if hard_set_delay != None:
             return hard_set_delay
         
         time_delay = int(self.readEventTablebyID(id, TIME_DELAY))
@@ -199,7 +196,7 @@ class petEvent(User):
         
         return time_delay
     
-    def getTimeDelay(self, hard_set_delay = 0):
+    def getTimeDelay(self, hard_set_delay = None) -> int:
         '''获取延迟的时间。若存在硬性时间(!=0)，则无视任何道具设置为硬性时间'''
         return self.getTimeDelayById(self.event_id, hard_set_delay)
     

@@ -21,11 +21,14 @@ LEVELUP_CRY = "levelup_cry"
 EXP_PS = "exp_per_second"
 CRY_PS = "cry_per_hour"
 MAX_SAVE_EXP = "max_save_exp"
+MAP = "map"
 
 IMAGE_PATH = "./src/database/image"
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 TIME_NAN = "2000-01-01 00:00:00"
+
+# 重构，pet和factory分开
 
 class Pet(User):
     '''Pet宠物类'''
@@ -40,6 +43,8 @@ class Pet(User):
     '''工厂当前等级'''
     crystal_num:int = None
     '''水晶当前数量'''
+    map:str = None
+    '''水晶当前数量'''
     
     last_lookup_time:datetime = datetime.strptime(TIME_NAN, TIME_FORMAT)
     
@@ -50,8 +55,17 @@ class Pet(User):
     def _update(self):
         '''更新自己的状态'''
         super()._update()
-        # 更新 level
         
+        # 更新mode
+        t=self.read(MAP)
+        if t == None:
+            self.map = "default"
+            self.write(PET_LEVEL, self.map)
+        else:
+            self.map = t
+        
+        # 更新 level
+        # 原："352.0" 新："default:352"
         t=self.read(PET_LEVEL)
         if t == None:
             self.level = 1
@@ -60,6 +74,7 @@ class Pet(User):
             self.level = int(float(t))
         
         # 更新 exp
+        # 原："352.0" 新："default:352"
         t=self.read(PET_EXP)
         if t == None:
             self.exp = 0
@@ -425,7 +440,6 @@ class Pet(User):
         levelup_cry = int(factory_table.at[self.factory_level-1, LEVELUP_CRY])
         return levelup_cry
         
-
 
 
 

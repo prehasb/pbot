@@ -6,13 +6,16 @@ from nonebot.adapters.onebot.v11 import MessageSegment
 from nonebot.plugin import PluginMetadata
 import random as rd
 import time as tm
-from user.pet import Pet
-from event.petEvent import petEvent
 import pandas as pd
 from nonebot.permission import SUPERUSER
 
 from nonebot.adapters import Message
 from nonebot.params import CommandArg
+
+
+from user.pet import Pet
+from user.factory import Factory
+from event.petEvent import petEvent
 
 __plugin_meta__ = PluginMetadata(
     name="pet",
@@ -45,6 +48,7 @@ async def handle_ck(event: MessageEvent):
     
     # 1、根据当前时间差获取玛德琳等级和水晶
     p = Pet(user_id)
+    f = Factory(user_id)
     # at_segment = MessageSegment.at(user_id)
     
     msg = ""
