@@ -1,15 +1,13 @@
 ﻿from item.item import Item
-NAME_IN_USERITEM = "expSaveBall"
+NAME_IN_USERITEM = "reverseButton"
 
-ID = 2
+ID = 16
 
-class expEater(Item):
+class reverseButton(Item):
     item_id = ID
-    max_exp_per_ball:int = 10000
-    gain_exp_per_ball:int = 100000
     
     def __init__(self, user_id:int):
-        super(expEater, self).__init__(user_id=user_id, item_id=ID)
+        super(reverseButton, self).__init__(user_id=user_id, item_id=ID)
         self._update()
     
     def _update(self):
@@ -30,16 +28,17 @@ class expEater(Item):
     @classmethod
     def describe(self):
         msg = ""
-        msg += "\r\n经验吞噬者"
-        msg += "\r\n使用该道具吞噬工厂生产的所有经验。"
-        msg += f"\r\n但是吞噬者会多返还给你工厂加工1倍的水晶。"
+        msg += "\r\n反转按钮"
+        msg += "\r\n是来自反转山脊的特殊按钮"
+        msg += f"\r\n使用之后，工厂每秒加工的经验和每小时加工的水晶数量调换"
+        msg += f"\r\n除了购买之外，还可以让玛德琳从反转山脊给你带回来"
         return msg
     
     @classmethod
     def getStateName(self, state):
         d = {
             0:"未启用",
-            1:"已启用"
+            1:"已反转"
             }
         state_name = d[state]
         return state_name

@@ -53,19 +53,20 @@ async def handle_ck(event: MessageEvent):
     
     msg = ""
     # msg += f"\r\n- 待领取: {p.getExpNum()}/{p.getMaxSaveExp()}经验值(经验值上限翻10倍，补偿持续到4月8日23:59分)，{p.getCryNum()}冲刺水晶"
-    msg += f"\r\n- 待领取: {p.getExpNum()}/{p.getMaxSaveExp()}经验值，{p.getCryNum()}冲刺水晶"
+    msg += f"\r\n- 待领取: {f.getExpNum()}/{f.getMaxSaveExp()}经验值，{f.getCryNum()}冲刺水晶"
     msg += f"\r\n- 当前玛德琳: lv{p.level} {p.getName()}"
     if p.getImagePath() != None:
         msg += MessageSegment.image(file=p.getImagePath())
     msg += f"\r\n- 当前经验值: {p.exp}/{p.getLevelUpExp()}，当前冲刺水晶: {p.crystal_num}个"
     if p.getLevelUpCry() > 0:
         msg += f"\r\n- 你的玛德琳想吃{p.feeded_cry}/{p.getLevelUpCry()}个水晶。"
-    msg += f"\r\n- 工厂等级为: {p.getFacName()}，升级所需水晶数量为{p.getFacLevelupCry()}"
-    msg += f"\r\n- 工厂每秒加工{p.getFacrotyExpPs()}点经验值，每小时生产{p.getFacrotyCryPh()}个冲刺水晶"
+    msg += f"\r\n- 工厂等级为: {f.getFacName()}，升级所需水晶数量为{f.getFacLevelupCry()}"
+    msg += f"\r\n- 工厂每秒加工{f.getFacrotyExpPs()}点经验值，每小时生产{f.getFacrotyCryPh()}个冲刺水晶"
     
     await ck.finish(message=msg, at_sender=True)
 
 
+# takeall = on_command("takeall", aliases={"take"})
 takeall = on_command("takeall", aliases={"take"})
 
 @takeall.handle()
@@ -75,16 +76,17 @@ async def handle_takeall(event: MessageEvent):
     msg = ""
     # 1、根据当前时间差获取玛德琳等级和水晶
     p = Pet(user_id)
-    exp_num = p.getExpNum()
+    f = Factory(user_id)
+    exp_num = f.getExpNum()
     if p.exp > p.getLevelUpExp()*10:
         msg += "你的玛德琳快饿死了！\r\n"
     msg += f"你获得了{exp_num}经验值"
-    cry_num = p.getCryNum()
+    cry_num = f.getCryNum()
     if cry_num != 0:
         msg += f"\r\n你获得了{cry_num}个冲刺水晶"
     
     # 2、如果玛德琳可以升级，则升级一次玛德琳，并将经验叠加到下一个等级
-    msg += p.updateExpandCry()
+    msg += f.updateExpandCry()
     
     # 3、显示升级信息
     await takeall.finish(message=msg, at_sender = True)
@@ -96,9 +98,9 @@ async def handle_build(event: MessageEvent):
     # 0、获取用户id
     user_id = event.user_id
     
-    p = Pet(user_id)
+    f = Factory(user_id)
     
-    msg = p.levelupFac()
+    msg = f.levelupFac()
     
     await build.finish(message=msg, at_sender = True)
 

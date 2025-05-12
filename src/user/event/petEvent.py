@@ -224,7 +224,6 @@ class petEvent(User):
         item_str:str = self.readEventTable(ITEM)
         if item_str == 0:
             return dict()
-        
         item_str_list = item_str.split("|") # ["test_item:5", "expSaveBall:2"]
         item_dict = dict() 
         

@@ -100,8 +100,11 @@ class ItemOperation(User):
         return msg
     
     def give(self, name:str, num:int) -> str:
+        from pet import Pet
         
+        p = Pet(self.user_id)
         msg = ""
+        add_msg = ""
         if not self.exist(name):
             msg += f"不存在该物品[{name}]！"
             return msg
@@ -112,6 +115,10 @@ class ItemOperation(User):
         
         son_item.number += num
         if son_item.number > son_item.getMaxNumber():
+            extra_num = son_item.number - son_item.getMaxNumber()
+            cry = son_item.getPrice()//2
+            add_msg = f"\r\n多余的{extra_num}个{son_item.getName()}转化为{cry}数量水晶"
+            p.addCry(cry)
             son_item.number = son_item.getMaxNumber()
 
         if son_item.number < 0:
@@ -126,6 +133,7 @@ class ItemOperation(User):
             show_num = -num
         
         msg += f"\r\n已{gain_text}{show_num}个{name}，现在你有{son_item.number}个{name}"
+        msg += add_msg
         return msg
     
     

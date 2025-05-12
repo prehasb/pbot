@@ -19,7 +19,7 @@ LEVELUP_CRY = "levelup_cry"
 FACTORY_TABLE_PATH = "./src/database/factory_table.csv"
 LEVELUP_CRY = "levelup_cry"
 EXP_PS = "exp_per_second"
-CRY_PS = "cry_per_hour"
+CRY_PH = "cry_per_hour"
 MAX_SAVE_EXP = "max_save_exp"
 MODE = "mode"
 
@@ -61,7 +61,7 @@ class Factory(User):
             self.write(FAC_LEVEL, self.factory_level)
         else:
             self.factory_level = int(float(t))
-        
+    
         # 更新 last_lookup_time (进行空检测)
         t = self.read(LAST_LOOKUP_TIME)
         if t == None:
@@ -69,4 +69,179 @@ class Factory(User):
             self.write(LAST_LOOKUP_TIME, self.last_lookup_time)
         else:
             self.last_lookup_time = datetime.strptime(t, TIME_FORMAT)
+        
+    def levelupFac(self) -> str:
+        "扣除水晶，升级工厂，返回消息。若水晶不够，给出提示。"
+        from user.pet import Pet
+        msg = ""
+        p = Pet(self.user_id)
+        if p.crystal_num >= self.getFacLevelupCry():
+            p.crystal_num -= self.getFacLevelupCry()
+            self.factory_level += 1
+            p.write(CRY_NUM, self.crystal_num)
+            self.write(FAC_LEVEL, self.factory_level)
+            msg = f'你成功升级了工厂，现在你的工厂等级为: {self.getFacName()}'
+            expps = self.getFacrotyExpPs()
+            if expps > 0:
+                msg += f'\r\n每秒产出{expps}点经验'
+            cryph = self.getFacrotyCryPh()
+            if cryph > 0:
+                msg += f'\r\n每小时产出{cryph}个水晶'
+        else:
+            msg = '你的水晶不够让工厂升级！'
+        return msg
+    
+    def updateExpandCry(self) -> str:
+        '''取出经验和水晶，并根据存储的经验值，判断玛德琳是否可以升级'''
+        from user.pet import Pet
+        p = Pet(self.user_id)
+        msg = ""
+        p.exp += self.getExpNum()
+        p.crystal_num += self.getCryNum()
+        lookup_time = datetime.now().replace(microsecond=0)
+        # 执行升级
+        msg += p.levelupPet()
+        self.write(LAST_LOOKUP_TIME, lookup_time)
+        p.write(PET_EXP, p.exp)
+        p.write(CRY_NUM, p.crystal_num)
+        self._update()
+        return msg
+    
+    # 以下是get类型函数
+    
+    def getFacrotyExpPs(self) -> int:
+        '''计算工厂每秒产生的经验值'''
+        
+        factory_table = pd.read_csv(FACTORY_TABLE_PATH, encoding="gb2312")
+        expPs = factory_table.at[self.factory_level-1, EXP_PS]
+        
+        # 20250510添加：反转按钮，经验值与水晶反转
+        #######################################################
+        from item.reverseButton import reverseButton
+        button = reverseButton(self.user_id)
+        if button.state == 1:
+            expPs = factory_table.at[self.factory_level-1, CRY_PH]
+        
+            # 20250418添加：宠物每升100级增加1水晶数量
+            #######################################################
+            from user.pet import Pet
+            p = Pet(self.user_id)
+            expPs += p.level//100
+            #######################################################
+        
+        #######################################################
+        
+        # 20250323添加：经验吞噬者，经验值归零
+        #######################################################
+        from item.expEater import expEater
+        eater = expEater(self.user_id)
+        if eater.state == 1:
+            expPs = 0
+        #######################################################
+        
+        
+        return int(expPs)
+    
+    # TODO 用装饰器重写
+    def getFacrotyCryPh(self) -> int:
+        '''计算工厂每小时产生的水晶数量'''
+        
+        factory_table = pd.read_csv(FACTORY_TABLE_PATH, encoding="gb2312")
+        CryPh = int(factory_table.at[self.factory_level-1, CRY_PH])
+        
+        # 20250418添加：宠物每升100级增加1水晶数量
+        #######################################################
+        from user.pet import Pet
+        p = Pet(self.user_id)
+        CryPh += p.level//100
+        #######################################################
+        
+        # 20250510添加：反转按钮，经验值与水晶反转
+        #######################################################
+        from item.reverseButton import reverseButton
+        button = reverseButton(self.user_id)
+        if button.state == 1:
+            CryPh = factory_table.at[self.factory_level-1, EXP_PS]
+        #######################################################
+        
+        # 20250323添加：经验吞噬者，水晶数量翻倍
+        #######################################################
+        from item.expEater import expEater
+        eater = expEater(self.user_id)
+        if eater.state == 1:
+            CryPh *= 2
+        #######################################################
+        
+        return int(CryPh)
+    
+    # TODO 用装饰器重写
+    def getMaxSaveExp(self) -> int:
+        '''查询最大存储经验'''
+        factory_table = pd.read_csv(FACTORY_TABLE_PATH, encoding="gb2312")
+        max_save_exp = factory_table.at[self.factory_level-1, MAX_SAVE_EXP]
+        # max_save_exp = factory_table.at[self.factory_level-1, MAX_SAVE_EXP]*20 # 20250407关服补偿
+        
+        # 20250322添加：经验存储球
+        #######################################################
+        from item.expSaveBall import expSaveBall
+        ball = expSaveBall(self.user_id)
+        max_save_exp += ball.getAddMaxExp()
+        #######################################################
+        
+        # 20250418添加：宠物每升一级增加经验值上限
+        #######################################################
+        from user.pet import Pet
+        p = Pet(self.user_id)
+        MAX_EXP_PL = 100
+        max_save_exp += (p.level-1)*MAX_EXP_PL
+        #######################################################
+        
+        return int(max_save_exp)
+    
+    def getOriginMaxSaveExp(self) -> int:
+        '''查询原始最大存储经验'''
+        factory_table = pd.read_csv(FACTORY_TABLE_PATH, encoding="gb2312")
+        max_save_exp = factory_table.at[self.factory_level-1, MAX_SAVE_EXP]
+        return int(max_save_exp)
+    
+    def getFacName(self) -> str:
+        '''获取工厂名称'''
+        fac_table = pd.read_csv(FACTORY_TABLE_PATH, encoding="gb2312")
+        name = fac_table.at[self.factory_level-1, NAME]
+        return name
+
+    def getFacLevelupCry(self) -> int:
+        factory_table = pd.read_csv(FACTORY_TABLE_PATH, encoding="gb2312")
+        levelup_cry = int(factory_table.at[self.factory_level-1, LEVELUP_CRY])
+        return levelup_cry
+    
+    def getExpNum(self) -> int:
+        '''待领取的exp值'''
+        from user.pet import Pet
+        p = Pet(self.user_id)
+        current_time = dt.datetime.now()
+        time_difference = current_time - self.last_lookup_time
+        second_difference = int(time_difference.total_seconds())
+        print(f"second_difference: {second_difference}")
+        expPs = self.getFacrotyExpPs()
+        
+        total_exp = second_difference * expPs
+        if total_exp > self.getMaxSaveExp():
+            total_exp = self.getMaxSaveExp()
+        
+        # 超高经验值惩罚
+        if p.exp > p.getLevelUpExp()*10:
+            total_exp *= (p.getLevelUpExp()*10)/(p.exp)
+            total_exp = int(total_exp)
+        return total_exp
+    
+    def getCryNum(self) -> int:
+        '''待领取的水晶数量'''
+        current_time_hour = dt.datetime.now().replace(minute=0,second=0,microsecond=0)
+        last_lookup_time_hour = self.last_lookup_time.replace(minute=0,second=0,microsecond=0)
+        time_difference = current_time_hour - last_lookup_time_hour
+        second_difference = time_difference.total_seconds()
+        hour_difference = int(second_difference//3600)
+        cryPh = self.getFacrotyCryPh()
+        return hour_difference * cryPh
     
