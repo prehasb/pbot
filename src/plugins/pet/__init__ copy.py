@@ -117,25 +117,19 @@ async def handle_feed(event: MessageEvent, arg: Message = CommandArg()):
     user_id = event.user_id
     p = Pet(user_id)
     
-    # 1、喂养宠物个数水晶
     if args[0] == "all":
-        msg = ""
-        first_feed_cry_num = p.getLevelUpCry() - p.feeded_cry
-        if first_feed_cry_num <= 0:
-            first_feed_cry_num = 1
-        msg += p.feed(first_feed_cry_num)
-        
-        msg_middle = ""
-        msg_end = ""
-        while p.exp >= p.getLevelUpExp():
-            if len(msg_end) > 500:
-                msg_end = ""
-                msg_middle += "\r\n......"
-            msg_end += p.feed(p.getLevelUpCry())
-        msg = msg + msg_middle + msg_end
-        
+        feed_cry_num = p.getLevelUpCry() - p.feeded_cry
+        if feed_cry_num <= 0:
+            feed_cry_num = 1 # all 特殊处理:若feednum=0，置1让函数返回不想吃水晶的语句
     else:
-        msg = p.feed(int(args[0]))
+        feed_cry_num = int(args[0])
+    
+    
+    # 1、喂养宠物个数水晶
+    # if args[0] == "all":
+        
+    # else:
+    msg = p.feed(feed_cry_num)
     
     # 2、将返回的消息传给用户
     if msg == "":

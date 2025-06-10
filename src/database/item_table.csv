@@ -18,3 +18,5 @@ item_id,name,name_in_useritem,price,max_number,has_state,can_use,can_buy
 16,反转按钮,reverseButton,2500,1,1,TRUE,TRUE
 17,登山之证,proveOfMount,2500,1,0,FALSE,FALSE
 18,水晶之心：ㄞ,crystalHeart7d,99999,9999,0,TRUE,FALSE
+19,水晶之心：梦幻山脊,crystalHeartDreamRidge,99999,9999,0,TRUE,FALSE
+20,水晶之心：漂泊深渊,crystalHeartStarfish,99999,9999,0,TRUE,FALSE

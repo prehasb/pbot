@@ -28,6 +28,7 @@ NEXT_EVENT = "next_event"
 CHOOSE = "choose"
 ITEM = "item"
 IMAGENAME = "imagename"
+RANDOMIMAGE = "randomimage"
 
 NT_int = 30
 # NT_int = 0
@@ -45,14 +46,6 @@ class petEvent(User):
     def _update(self):
         '''更新自己的状态'''
         super()._update()
-        
-        # 更新 next_event_time (进行空检测)
-        t = self.read(NEXT_EVENT_TIME)
-        if t == None:
-            self.next_event_time = dt.datetime.now().replace(microsecond=0)
-            self.write(NEXT_EVENT_TIME, self.next_event_time)
-        else:
-            self.next_event_time = datetime.strptime(t, TIME_FORMAT)
         
         # 更新 next_event_time (进行空检测)
         t = self.read(NEXT_EVENT_TIME)
@@ -96,6 +89,8 @@ class petEvent(User):
         if self.event_id == 0:
             self.event_id = self.pickRandomEvent()
         
+        print("self.event_id: ", self.event_id)
+        
         msg += "\r\n你收到了来自旅行中的玛德琳的一封信："
         
         msg += self.getDescription()
@@ -126,14 +121,23 @@ class petEvent(User):
     
     def getImagePATH(self) -> str:
         name = self.readEventTable(IMAGENAME)
+        random = self.readEventTable(RANDOMIMAGE)
+        
         if name == 0:
             name = str(self.event_id)
-        image_path = os.path.abspath(IMAGE_PATH) +"\\" + name + ".png"
-        if not os.path.exists(image_path):
-            image_path = os.path.abspath(IMAGE_PATH) +"\\" + str(self.event_id) + ".jpg"
+        image_path = os.path.abspath(IMAGE_PATH) +"\\" + name
+        if random == 0:
+            image_path = image_path + ".png"
             if not os.path.exists(image_path):
                 return None
+        
+        if random != 0:
+            dp = DrawPhoto(image_path)
+            dp.makeFinalPhoto()
+            image_path = dp.outputTotalPhoto()
+        
         file_image_path = "file:///" + image_path
+        print("file_image_path: ", file_image_path)
         return file_image_path
     
     def setNextTime(self, hard_set_delay:int = None) -> str:
@@ -233,6 +237,13 @@ class petEvent(User):
                 item_dict[parts[0]] = int(parts[1])
         return item_dict
     
+    def getRandomImage(self) -> bool:
+        '''查询是否随机生成图片'''
+        ri = self.readEventTable(RANDOMIMAGE)
+        if ri == 0:
+            ri = False
+        return bool(ri)
+        
     @classmethod
     def isFirstEventbyId(self, id) -> bool:
         event_table = pd.read_csv(EVENT_TABLE_PATH, encoding="gb2312")
@@ -311,4 +322,262 @@ class petEvent(User):
         if num < 0:
             return -1
         return 0
+
+from PIL import Image, ImageDraw
+
+class DrawPhoto(object):
+    
+    final_photo = None
+    width = 1600
+    height = 1200
+    scale_factor = 0.6
+    max_iou = 0.001
+    min_used_rate = 0.7
+    
+    def __init__(self, path:str):
+        super(DrawPhoto, self).__init__()
+        self.imagePath = path
+        self.used_area = []
+        self.file_list = []
+        rd.seed()
+        self.initImageFileList()
+    
+    def initImageFileList(self):
+        # 列出文件夹中的所有文件
+        files = os.listdir(self.imagePath)
+        
+        # 过滤出图片文件（根据常见的图片扩展名）
+        image_extensions = ('.png', '.jpg', '.jpeg', '.gif', '.bmp')
+        self.file_list = [file for file in files if file.lower().endswith(image_extensions)]
+        print("self.file_list: ", self.file_list)
+        if "bg.png" in self.file_list:
+            self.file_list.remove("bg.png")
+        
+    def outputTotalPhoto(self):
+        if self.final_photo == None:
+            self.final_photo = self.createNullImage()
+        
+        randnum = rd.randint(0, 1000)
+        output_file = f"./cache/image{randnum}.png"
+        self.final_photo.save(output_file, "PNG", quality=95)
+        final_img_path = os.path.abspath(output_file)
+        return final_img_path
+    
+    def makeFinalPhoto(self):
+        repeat_num = 0
+        while repeat_num < 100 and self.calculateUsedRate() < self.min_used_rate :
+            if self.addRandomPhoto():
+                repeat_num = 0
+            else:
+                repeat_num += 1
+            
+            if self.file_list == []:
+                break
+        
+    def addRandomPhoto(self) -> bool:
+        image_name = self.getRandomImagePath()
+        image_path = os.path.join(self.imagePath, image_name)
+        if self.file_list == []:
+            return False
+        img = Image.open(image_path)
+        # random_scale = rd.uniform(0.5, 0.7)
+        # img = img.resize((int(img.size[0]*random_scale), int(img.size[1]*random_scale)))
+        if img.size[0]/self.width > 0.2 or img.size[1]/self.height > 0.2:
+            img = img.resize((int(img.size[0]*self.scale_factor), int(img.size[1]*self.scale_factor)))
+        
+        xy = self.getAUsablexy(img)
+        if xy == None:
+            xy = self.getRandomXY(img)
+        
+        xyxy = (xy, (xy[0]+img.size[0], xy[1]+img.size[1]))
+        iou = self.calculateOverlap(xyxy)
+        if iou > self.max_iou:
+            return False
+        
+        self.file_list.remove(image_name)
+        self.addNewPhoto(img, xy)
+        self.used_area.append(xyxy)
+        return True
+    
+    def getAUsablexy(self, img):
+        min_x = 0
+        min_y = 0
+        max_x = self.width - img.size[0]
+        max_y = self.height - img.size[1]
+        # 均分num^2份宫格
+        num = 9
+        for i in range(num):
+            for j in range(num):
+                xy = (rd.randint(int(max_x*i/num), int(max_x*(i+1)/num)), rd.randint(int(max_y*j/num), int(max_y*(j+1)/num)))
+                # print("xy: ", xy)
+                xyxy = (xy, (xy[0]+img.size[0], xy[1]+img.size[1]))
+                if self.isInside(xyxy) and self.calculateOverlap(xyxy) < self.max_iou:
+                    return xy
+        
+        
+        for used_photo in self.used_area:
+            # 左侧
+            x = used_photo[0][0] - img.size[0] + rd.randint(-10, 10)
+            y = rd.randint(0, max_y)
+            xy = (x, y)
+            xyxy = (xy, (xy[0]+img.size[0], xy[1]+img.size[1]))
+            if self.isInside(xyxy) and self.calculateOverlap(xyxy) < self.max_iou:
+                return xy
+            # 右侧
+            x = used_photo[1][0] + rd.randint(-10, 10)
+            y = rd.randint(0, max_y)
+            xy = (x, y)
+            xyxy = (xy, (xy[0]+img.size[0], xy[1]+img.size[1]))
+            y = rd.randint(0, max_y)
+            # 上侧
+            x = rd.randint(0, max_x)
+            y = used_photo[0][1] - img.size[1] + rd.randint(-10, 10)
+            xy = (x, y)
+            xyxy = (xy, (xy[0]+img.size[0], xy[1]+img.size[1]))
+            if self.isInside(xyxy) and self.calculateOverlap(xyxy) < self.max_iou:
+                return xy
+            # 下侧
+            x = rd.randint(0, max_x)
+            y = used_photo[1][1] + rd.randint(-10, 10)
+            xy = (x, y)
+            xyxy = (xy, (xy[0]+img.size[0], xy[1]+img.size[1]))
+            if self.isInside(xyxy) and self.calculateOverlap(xyxy) < self.max_iou:
+                return xy
+        return None
+    
+    def image2Photo(self, img, inner_border=20, outer_border=5, output_file = "./cache/image.png"):
+        """
+        为图片添加双层圆角边框
+        :param img_path: 原始图片
+        :return: 添加边框后的图片
+        """
+        # 计算总边框宽度
+        total_border = inner_border + outer_border
+        
+        # 创建一个新的透明图层，比原图大总边框宽度
+        bordered_img = Image.new("RGBA", 
+                                (img.width + 2 * total_border, img.height + 2 * total_border),
+                                (0, 0, 0, 0))
+        
+        # 创建外边框
+        inner_mask = Image.new("RGBA", bordered_img.size, (0, 0, 0, 0))
+        inner_draw = ImageDraw.Draw(inner_mask)
+        
+        # 绘制内边框的圆角矩形（白色）
+        inner_rect = [
+            (outer_border, outer_border),
+            (bordered_img.width - outer_border, bordered_img.height - outer_border)
+        ]
+        inner_draw.rounded_rectangle(inner_rect, radius=int(inner_border*1.25), fill=(255, 255, 255, 255))
+        
+        # 创建外边框
+        outer_mask = Image.new("RGBA", bordered_img.size, (0, 0, 0, 0))
+        outer_draw = ImageDraw.Draw(outer_mask)
+        
+        # 绘制内边框的圆角矩形（灰色）
+        outer_rect = [
+            (0, 0),
+            (bordered_img.width, bordered_img.height)
+        ]
+        outer_draw.rounded_rectangle(outer_rect, radius=int((outer_border+outer_border)*3), fill=(84, 84, 84, 255))
+        # outer_draw.rounded_rectangle(outer_rect, radius=inner_border+outer_border, fill=(255, 255, 255))
+
+        # 合并图像
+        bordered_img.paste(outer_mask, (0, 0), outer_mask)
+        bordered_img.paste(inner_mask, (0, 0), inner_mask)
+        
+        # 将原图粘贴到中心位置
+        bordered_img.paste(img, (total_border, total_border))
+        
+        return bordered_img
+
+    def createNullImage(self) -> Image:
+        # 创建一个新的透明图层
+        # 计算放大倍率
+        
+        bg = Image.open(self.imagePath + "\\bg.png")
+        bg_x = bg.size[0]
+        bg_y = bg.size[1]
+        x_scale = self.width/bg_x
+        y_scale = self.height/bg_y
+        
+        scale = max(x_scale, y_scale)
+        
+        bg = bg.resize((int(bg_x*scale), int(bg_y*scale)))
+        null = Image.new("RGBA", (self.width, self.height), (0, 0, 0, 204))
+        bg.paste(null, (0, 0), null)
+        bg = bg.crop((0,0,self.width,self.height))
+        return bg
+    
+    def calculateUsedRate(self) -> float:
+        used_area = 0
+        for xy_used in self.used_area:
+            x1 = xy_used[0][0]
+            y1 = xy_used[0][1]
+            x2 = xy_used[1][0]
+            y2 = xy_used[1][1]
+            used_area += (x2-x1) * (y2-y1)
+        
+        return used_area / (self.height*self.width)
+    
+    def calculateOverlap(self, xyxy) -> float:
+        '''xyxy = ((x1, y1), (x2, y2))'''
+        if self.used_area == []:
+            return 0
+        
+        overlap_area = 0
+        for xy_used in self.used_area:
+            
+            x1 = xy_used[0][0]
+            y1 = xy_used[0][1]
+            x2 = xy_used[1][0]
+            y2 = xy_used[1][1]
+            
+            x3 = xyxy[0][0]
+            y3 = xyxy[0][1]
+            x4 = xyxy[1][0]
+            y4 = xyxy[1][1]
+            
+            colInt = max(0, min(x2 ,x4) - max(x1, x3))
+            rowInt = max(0, min(y2, y4) - max(y1, y3))
+            overlap_area += colInt * rowInt
+        
+        return overlap_area / (self.height*self.width)
+    
+    def addNewPhoto(self, img, xy) -> None:
+        if self.final_photo == None:
+            self.final_photo = self.createNullImage()
+        
+        photo = self.image2Photo(img)
+        photo = photo.rotate(rd.randint(-10, 10) ,expand=True)
+        
+        self.final_photo.paste(photo, (xy[0]-50, xy[1]-50), photo)
+    
+    def getRandomImagePath(self) -> str:
+        # 随机选择一个图片文件
+        random_image = rd.choice(self.file_list)
+        return random_image
+    
+    def getRandomXY(self, img:Image) -> tuple:
+        max_x = 1600 - img.size[0]
+        max_y = 1200 - img.size[1]
+        x = rd.randint(0, max_x)
+        y = rd.randint(0, max_y)
+        return (x, y)
+    
+    def isInside(self, img, xy) -> bool:
+        min_x = 0
+        min_y = 0
+        max_x = self.width - img.size[0]
+        max_y = self.height - img.size[1]
+        if xy[0] < min_x or xy[0] > max_x or xy[1] < min_y or xy[1] > max_y:
+            return False
+        return True
+    
+    def isInside(self, xyxy) -> bool:
+        if xyxy[0][0] < 0 or xyxy[1][0] > self.width or xyxy[0][1] < 0 or xyxy[1][1] > self.height:
+            return False
+        return True
+        
+        
     

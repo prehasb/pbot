@@ -18,6 +18,8 @@ from item.hell.crystalHeartHell import crystalHeartHell
 from item.crystalHeart.crystalHeartTerminal import crystalHeartTerminal
 from item.reverseButton import reverseButton
 from item.m7d.crystalHeart7d import crystalHeart7d
+from item.crystalHeart.crystalHeartDreamRidge import crystalHeartDreamRidge
+from item.crystalHeart.crystalHeartStarfish import crystalHeartStarfish
 
 from item.item import Item
 ITEM_CLASS_MAPPING:dict[str, Item] = {
@@ -40,6 +42,8 @@ ITEM_CLASS_MAPPING:dict[str, Item] = {
     "crystalHeartHell": crystalHeartHell,
     "crystalHeartTerminal": crystalHeartTerminal,
     "crystalHeart7d": crystalHeart7d,
+    "crystalHeartDreamRidge": crystalHeartDreamRidge,
+    "crystalHeartStarfish": crystalHeartStarfish,
 }
 
 

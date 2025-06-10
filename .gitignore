@@ -22,6 +22,7 @@ pyproject.toml
 src/database/image/
 src/database/eventimage/
 src/database/music/
+cache/
 
 # 配置环境
 .env

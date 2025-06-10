@@ -78,7 +78,7 @@ class Factory(User):
         if p.crystal_num >= self.getFacLevelupCry():
             p.crystal_num -= self.getFacLevelupCry()
             self.factory_level += 1
-            p.write(CRY_NUM, self.crystal_num)
+            p.write(CRY_NUM, p.crystal_num)
             self.write(FAC_LEVEL, self.factory_level)
             msg = f'你成功升级了工厂，现在你的工厂等级为: {self.getFacName()}'
             expps = self.getFacrotyExpPs()
@@ -226,8 +226,8 @@ class Factory(User):
         expPs = self.getFacrotyExpPs()
         
         total_exp = second_difference * expPs
-        if total_exp > self.getMaxSaveExp():
-            total_exp = self.getMaxSaveExp()
+        # if total_exp > self.getMaxSaveExp():
+        #     total_exp = self.getMaxSaveExp()
         
         # 超高经验值惩罚
         if p.exp > p.getLevelUpExp()*10:

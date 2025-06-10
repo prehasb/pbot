@@ -174,7 +174,7 @@ class Pet(User):
             
             if self.feeded_cry < self.getLevelUpCry():
                 msg += f'\r\n玛德琳想吃({self.feeded_cry}/{self.getLevelUpCry()})个充能水晶'
-
+        
         if leveluped:
             self.write(PET_LEVEL, self.level)
             self.write(PET_EXP, self.exp)
