@@ -1,0 +1,10 @@
+id,name,english_name,description
+0,测试状态,test,测试
+1,测试状态1,test1,测试
+2,测试状态2,test2,测试
+3,工厂停滞,factoryStop,停止工厂一切生产
+4,工厂翻倍,factoryDouble,工厂加工翻倍
+5,正在加工黑钢原矿,darksteelRawOreProcessing,正在加工黑钢原矿
+6,正在加工黑钢残片,darksteelFragmentProcessing,正在加工黑钢残片
+7,皎寒水晶原矿冷却工厂,luniteCrystalOre,皎寒水晶原矿冷却中
+8,2,,

@@ -1,12 +1,12 @@
 ﻿from item.item import Item
 
 NAME_IN_USERITEM = "test_item"
-ITEM_TEST_ID = 0
+# ID = 0
 
 class test_item(Item):
-    item_id = ITEM_TEST_ID
-    def __init__(self, user_id:int):
-        super(test_item, self).__init__(user_id=user_id, item_id=ITEM_TEST_ID)
+    # item_id = ID
+    def __init__(self, user_id:int, item_id:int):
+        super(test_item, self).__init__(user_id=user_id, item_id=item_id)
         self._update()
     
     def _update(self):

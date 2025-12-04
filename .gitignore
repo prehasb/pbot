@@ -33,6 +33,8 @@ cache/
 .venv/
 lagrange-0-db/
 LAGRANGE.OneBot.exe
+LLONEBOT/
+LLTwoBot*
 
 # 我的笔记
 myread.html

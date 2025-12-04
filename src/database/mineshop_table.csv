@@ -1,0 +1,3 @@
+id,name,difficult,answer_stone,min_ductility,min_beauty,min_hardness,min_density,max_density,reward,refresh,text
+1,,5,,90,85,10,6,7,2000,,您好！我需要一批矿石来制作一条华丽的项链，要求矿石必须足够柔软以便雕刻复杂花纹，同时要有迷人的光泽和适中的重量。您这里有没有符合这些条件的矿石呢？
+2,废料回收,0,废料,-100,-100,-100,-100,100,8,FALSE,加工一定会产生废料，或者有一些你不想要的物品。这些就由我来回收吧。

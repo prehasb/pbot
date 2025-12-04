@@ -25,11 +25,11 @@ class Item(User):
         self._update()
     
     def _update(self):
-        '''更新自己的状态'''
+        '''更新自己的状态，包括数量和状态'''
         super()._update()
         name_in_useritem = self.getNameinUseritem()
         t=self.read(name_in_useritem)
-        if t == None:
+        if t == None or t == '':
             self.number = 0
             self.write(name_in_useritem, 0)
         else:
@@ -40,20 +40,20 @@ class Item(User):
         
         state_column = self.getStateNameinUseritem()
         t=self.read(state_column)
-        if t == None:
+        if t == None or t == '':
             self.state = int(0)
             self.write(state_column, self.state)
         else:
             self.state = int(float(t))
         
-    def isEnough(self, num) -> bool:
+    def isEnough(self, num:int) -> bool:
         '''判断物品是否足够num个'''
         if self.number >= num and num > 0:
             return True
         else:
             return False
         
-    def use(self, num) -> str:
+    def use(self, num:int) -> str:
         '''消耗性使用，减去num个物品。若无物品，返回"提示道具不足"的语句'''
         msg = ""
         
@@ -85,14 +85,13 @@ class Item(User):
         name = item_table.at[item_id, NAME]
         return name
     
-    @classmethod
     def getName(self) -> str:
         '''查询道具名称'''
         name = self.getNamebyId(self.item_id)
         return name
     
     @classmethod
-    def getNameinUseritembyId(self, item_id) -> str:
+    def getEnglishNamebyId(self, item_id) -> str:
         '''查询道具在表中的名称'''
         item_table = pd.read_csv(ITEM_TABLE_PATH, encoding="gb2312")
         name_in_useritem = item_table.at[item_id, NAME_IN_USERITEM]
@@ -100,7 +99,7 @@ class Item(User):
     
     def getNameinUseritem(self) -> str:
         '''查询道具在表中的名称'''
-        name_in_useritem = self.getNameinUseritembyId(self.item_id)
+        name_in_useritem = self.getEnglishNamebyId(self.item_id)
         return name_in_useritem
     
     def getStateNameinUseritem(self) -> str:
@@ -109,10 +108,7 @@ class Item(User):
     @classmethod
     def canBuy(self) -> bool:
         item_table = pd.read_csv(ITEM_TABLE_PATH, encoding="gb2312")
-        print("item_table:", item_table)
-        print("item_table.at[self.item_id, CAN_BUY]", item_table.at[self.item_id, CAN_BUY])
         can_buy = bool(item_table.at[self.item_id, CAN_BUY])
-        print(self.item_id,":",can_buy)
         return can_buy
     
     @classmethod
@@ -151,6 +147,3 @@ class Item(User):
         msg += f"\r\n暂无该道具{self.getName()}的描述"
         return msg
 
-    
-    
-    

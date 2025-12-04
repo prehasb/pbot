@@ -1,15 +1,15 @@
 ﻿from item.item import Item
 NAME_IN_USERITEM = "expSaveBall"
 
-EXPBALL_ID = 4
+# ID = 4
 
 class expSaveBall(Item):
-    item_id = EXPBALL_ID
+    # item_id = ID
     max_exp_per_ball:int = 25000
     gain_exp_per_ball:int = 250000
     
-    def __init__(self, user_id:int):
-        super(expSaveBall, self).__init__(user_id=user_id, item_id=EXPBALL_ID)
+    def __init__(self, user_id:int, item_id:int):
+        super(expSaveBall, self).__init__(user_id=user_id, item_id=item_id)
         self._update()
     
     def _update(self):

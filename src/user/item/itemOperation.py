@@ -35,33 +35,34 @@ class ItemOperation(User):
             return msg
         
         # 获取子物品实例
-        name_in_useritem = Item.getNameinUseritembyId(item_id=self.getIdbyName(name=name))
-        item_class = ITEM_CLASS_MAPPING.get(name_in_useritem, Item)
-        son_item = item_class(user_id=self.user_id)
+        english_name = self.getEnglishNamebyName(name)
+        id = self.getIdbyName(name)
+        itemClass = ITEM_CLASS_MAPPING.get(english_name, Item)
+        item_being_bought = itemClass(user_id=self.user_id, item_id=id)
         
         # 根据数据库，判断是否可购买
-        if not son_item.canBuy():
+        if not item_being_bought.canBuy():
             msg += f"不可购买该物品[{name}]！"
             return msg
         
         # 根据数据库，判断最大上限，道具不能超过最大上限
-        if son_item.number + num > son_item.getMaxNumber():
-            msg += f"该道具数量上限为{son_item.getMaxNumber()}，你已超上限"
+        if item_being_bought.number + num > item_being_bought.getMaxNumber():
+            msg += f"该道具数量上限为{item_being_bought.getMaxNumber()}，你已超上限"
             return msg
         
         # 花费水晶进行购买
         p = Pet(self.user_id)
-        total_price = item_class.getPrice()*num
+        total_price = itemClass.getPrice()*num
         
-        has_cry = p.hasCry(total_price)
+        has_cryBool = p.hasCry(total_price)
         msg += p.useCry(total_price)
         
-        if not has_cry:
+        if not has_cryBool:
             return msg
         
         msg += f"\r\n已购买{num}个{name}。"
-        son_item.number += num
-        son_item.write(son_item.getNameinUseritem(), son_item.number)
+        item_being_bought.number += num
+        item_being_bought.write(item_being_bought.getNameinUseritem(), item_being_bought.number)
         
         return msg
     
@@ -77,29 +78,33 @@ class ItemOperation(User):
             msg += f"不存在该物品[{name}]！"
             return msg
         
-        name_in_useritem = Item.getNameinUseritembyId(item_id=self.getIdbyName(name=name))
-        print("l66:",name_in_useritem)
-        item_class = ITEM_CLASS_MAPPING.get(name_in_useritem, Item)
-        son_item = item_class(user_id = self.user_id)
+        english_name = self.getEnglishNamebyName(name)
+        itemClass = ITEM_CLASS_MAPPING.get(english_name, Item)
+        item_being_used = itemClass(user_id = self.user_id)
         
-        if not son_item.canUse():
-            msg = f"不可使用该物品[{son_item.getName()}]！"
+        if not item_being_used.canUse():
+            msg = f"不可使用该物品[{item_being_used.getName()}]！"
             return msg
         
-        msg = son_item.use(num)
+        msg = item_being_used.use(num)
         return msg
     
     def myitem(self) -> str:
         msg = "\r\n你的道具如下"
-        for value in ITEM_CLASS_MAPPING.values():
-            son_item = value(user_id=self.user_id)
-            if son_item.number != 0:
-                msg += f"\r\n- {son_item.getName()} x {son_item.number}"
+        for english_name in ITEM_CLASS_MAPPING.keys():
+            id = self.getIdbyEnglishName(english_name)
+            item_being_checked = ITEM_CLASS_MAPPING[english_name](user_id=self.user_id, item_id=id)
+            if item_being_checked.number != 0:
+                msg += f"\r\n- {item_being_checked.getName()} x {item_being_checked.number}"
         if msg == "\r\n你的道具如下":
             msg += "\r\n空空如也！"
         return msg
     
-    def give(self, name:str, num:int) -> str:
+    def give(self, name:str, num:int = 1) -> str:
+        '''
+        name: 英文名称
+        num: 数量
+        '''
         from pet import Pet
         
         p = Pet(self.user_id)
@@ -109,18 +114,18 @@ class ItemOperation(User):
             msg += f"不存在该物品[{name}]！"
             return msg
         
-        name_in_useritem = Item.getNameinUseritembyId(item_id=self.getIdbyName(name=name))
-        item_class = ITEM_CLASS_MAPPING.get(name_in_useritem, Item)
+        english_name = self.getEnglishNamebyName(name)
+        item_class = ITEM_CLASS_MAPPING.get(english_name, Item)
         son_item = item_class(user_id=self.user_id)
         
         son_item.number += num
         if son_item.number > son_item.getMaxNumber():
             extra_num = son_item.number - son_item.getMaxNumber()
             cry = son_item.getPrice()//2
-            add_msg = f"\r\n多余的{extra_num}个{son_item.getName()}转化为{cry}数量水晶"
-            p.addCry(cry)
+            add_msg = f"\r\n多余的{extra_num}个{son_item.getName()}转化为{cry*extra_num}数量水晶"
+            p.addCry(cry*extra_num)
             son_item.number = son_item.getMaxNumber()
-
+        
         if son_item.number < 0:
             son_item.number = 0
         
@@ -136,14 +141,26 @@ class ItemOperation(User):
         msg += add_msg
         return msg
     
+    @classmethod
+    def specialName(self, name:str) -> bool:
+        '''特殊名字开小灶，判断它存在'''
+        
+        if name[:5] == "水晶之心：": # name = "水晶之心：XXXX"
+            return "水晶之心"
+        return name
     
     @classmethod
     def exist(self, name:str) -> bool:
         '''查询数据库中是否存在名为name的道具'''
-        item_id = self.getIdbyName(name)
-        if item_id == None:
-            return False
-        return True
+        
+        # 特殊名字规则开个小灶
+        name = self.specialName(name)
+        english_name = self.getEnglishNamebyName(name)
+        
+        if english_name != None:
+            return True
+        
+        return False
     
     @classmethod
     def describe(self, name:str) -> str:
@@ -153,26 +170,35 @@ class ItemOperation(User):
             msg += f"不存在该物品[{name}]！"
             return msg
         
-        name_in_useritem = Item.getNameinUseritembyId(item_id=self.getIdbyName(name=name))
+        english_name = self.getEnglishNamebyName(name)
+        itemClass = ITEM_CLASS_MAPPING.get(english_name, Item)
+        msg = itemClass.describe()
         
-        item_class = ITEM_CLASS_MAPPING.get(name_in_useritem, Item)
-        msg = item_class.describe()
         return msg
     
     @classmethod
     def shop(self) -> str:
         msg = ""
         msg += "商店物品"
-        for value in ITEM_CLASS_MAPPING.values():
-            if value.canBuy():
-                msg += f"\r\n- {value.getName()}：{value.getPrice()}水晶"
+        for itemClass in ITEM_CLASS_MAPPING.values():
+            if itemClass.canBuy():
+                msg += f"\r\n- {itemClass.getName()}：{itemClass.getPrice()}水晶"
         return msg
     
     @classmethod
     def getIdbyName(self, name:str) -> int|None:
-        '''查询道具在表中的名称'''
+        '''查询道具在item_table表中的名称'''
         item_table = pd.read_csv(ITEM_TABLE_PATH, encoding="gb2312")
         row_list = item_table[item_table[NAME]==name]
+        if row_list.empty:
+            return None
+        return int(row_list.index[0])
+    
+    @classmethod
+    def getIdbyEnglishName(self, name_in_useritem:str) -> int|None:
+        '''查询道具在item_table表中的名称'''
+        item_table = pd.read_csv(ITEM_TABLE_PATH, encoding="gb2312")
+        row_list = item_table[item_table[NAME_IN_USERITEM]==name_in_useritem]
         if row_list.empty:
             return None
         return int(row_list.index[0])
@@ -185,5 +211,14 @@ class ItemOperation(User):
         if row_list.empty:
             return None
         return item_table.at[int(row_list.index[0]), NAME]
+    
+    @classmethod
+    def getEnglishNamebyName(self, name:str) -> int|None:
+        '''查询道具在表中的英文名称'''
+        item_table = pd.read_csv(ITEM_TABLE_PATH, encoding="gb2312")
+        row_list = item_table[item_table[NAME]==name]
+        if row_list.empty:
+            return None
+        return item_table.at[int(row_list.index[0]), NAME_IN_USERITEM]
     
     

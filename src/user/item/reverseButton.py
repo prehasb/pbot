@@ -1,13 +1,13 @@
 ﻿from item.item import Item
 NAME_IN_USERITEM = "reverseButton"
 
-ID = 16
+# ID = 16
 
 class reverseButton(Item):
-    item_id = ID
+    # item_id = ID
     
-    def __init__(self, user_id:int):
-        super(reverseButton, self).__init__(user_id=user_id, item_id=ID)
+    def __init__(self, user_id:int, item_id:int):
+        super(reverseButton, self).__init__(user_id=user_id, item_id=item_id)
         self._update()
     
     def _update(self):

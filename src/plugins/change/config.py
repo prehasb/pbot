@@ -1,0 +1,2 @@
+﻿API_GROUP_ID = 1020661785
+prehasb_id = 1019276364

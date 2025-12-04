@@ -1,14 +1,14 @@
 ﻿from item.item import Item
 NAME_IN_USERITEM = "crystalHeart"
 
-ID = 8
+# ID = 8
 CRY_NUM = 50
 
 class crystalHeart(Item):
-    item_id = ID
+    # item_id = ID
     gain_cry_per_heart:int = CRY_NUM
     
-    def __init__(self, user_id:int, item_id = ID):
+    def __init__(self, user_id:int, item_id:int):
         super(crystalHeart, self).__init__(user_id=user_id, item_id=item_id)
         self._update()
     
@@ -40,4 +40,8 @@ class crystalHeart(Item):
         msg += f"\r\n{self.getName()}"
         msg += f"\r\n使用后获得{self.gain_cry_per_heart}个水晶。"
         return msg
-    
+
+# 水晶之心子类
+
+
+

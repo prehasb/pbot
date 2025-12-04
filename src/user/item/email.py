@@ -1,14 +1,14 @@
 ﻿from item.item import Item
 
-ID = 13
+# ID = 13
 SKIP_MINUTE = 5
 
 class email(Item):
-    item_id = ID
+    # item_id = ID
     skip_minute = SKIP_MINUTE
     
-    def __init__(self, user_id:int):
-        super(email, self).__init__(user_id=user_id, item_id=ID)
+    def __init__(self, user_id:int, item_id:int):
+        super(email, self).__init__(user_id=user_id, item_id=item_id)
         self._update()
     
     def _update(self):

@@ -1,0 +1,5 @@
+name,min_tempurature,max_tempurature,min_activity,max_activity,level_vary,mine1,mine2,description
+废料,-300,2000,100,10000,,all,all,产生废料
+废料,-300,2000,0,10000,,废料,all,产生废料
+水晶聚合物,500,1000,0,100,,可加工水晶,可加工水晶,正常加工
+水晶聚合物,500,1000,50,100,1,可加工水晶,水晶聚合物,高反应活性等级+1
