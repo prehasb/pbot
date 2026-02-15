@@ -85,11 +85,18 @@ async def handle_takeall(event: MessageEvent):
     msg = ""
     # 1、根据当前时间差获取玛德琳等级和水晶
     f = Factory(user_id)
+    p = Pet(user_id)
     
     # 2、如果玛德琳可以升级，则升级一次玛德琳，并将经验叠加到下一个等级
     msg += f.updateExpandCry()
     
-    # 3、显示升级信息
+    # 3、如果其他地图可以更新经验，则进行经验的更新
+    msg += p.updateExpfromMap(None) # TODO
+    
+    # 执行升级
+    msg += p.levelupPet()
+    
+    # 4、显示升级信息
     await takeall.finish(message=msg, at_sender = True)
 
 build = on_command("build")
@@ -254,4 +261,49 @@ async def st_hander(event: MessageEvent, arg: Message = CommandArg()):
     
     await letterTest.finish(message=msg, at_sender = True)
     
+
+
+# map = on_command("map", permission=SUPERUSER)
+map = on_command("map")
+
+@map.handle()
+async def handle_feed(event: MessageEvent, arg: Message = CommandArg()):
+    args = str(arg).lower().split()
     
+    if len(args) >= 1:
+        name = args[0]
+    
+    if len(args) == 0:
+        return 
+    
+    # 0、获取用户id
+    user_id = event.user_id
+    
+    p = Pet(user_id=user_id)
+    msg = p.changeMap(map_name=name)
+    
+    await map.finish(message=msg)
+
+upd = on_command("upd", permission=SUPERUSER)
+# map = on_command("map")
+
+@upd.handle()
+async def handle_feed(event: MessageEvent, arg: Message = CommandArg()):
+    args = str(arg).lower().split()
+    
+    if len(args) >= 1:
+        name = args[0]
+    
+    if len(args) == 0:
+        name = None
+    
+    # 0、获取用户id
+    user_id = event.user_id
+    
+    p = Pet(user_id=user_id)
+    msg = p.updateExpfromMap(map_name=name)
+    
+    await upd.finish(message=msg)
+
+
+

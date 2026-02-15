@@ -11,7 +11,11 @@ CRY_NUM = "crystal_num"
 LAST_LOOKUP_TIME = "last_lookup_time"
 FEEDED_CRY = "feeded_cry"
 
-PET_TABLE_PATH = "./src/database/pet_table.csv"
+# PET_TABLE_PATH = "./src/database/pet_table.csv"
+PET_TABLE_PATH = {
+    "官图":"./src/database/pet_table/官图.csv",
+    "草莓酱":"./src/database/pet_table/草莓酱.csv"
+    }
 NAME = "name"
 LEVELUP_EXP = "levelup_exp"
 LEVELUP_CRY = "levelup_cry"
@@ -23,14 +27,18 @@ CRY_PS = "cry_per_hour"
 MAX_SAVE_EXP = "max_save_exp"
 MAP = "map"
 
-IMAGE_PATH = "./src/database/image"
+# IMAGE_PATH = "./src/database/image"
+IMAGE_PATH = {
+    "官图":"./src/database/image/官图",
+    "草莓酱":"./src/database/image/草莓酱",
+    }
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 TIME_NAN = "2000-01-01 00:00:00"
 
-
+DEFAULT_MAP = "官图"
 MAP_LIST = ["官图", "草莓酱"]
-MAP_DICT = {"官图": "default", "草莓酱":"strawberry"}
+# MAP_DICT = {"官图": "default", "草莓酱":"strawberry"}
 
 class Pet(User):
     '''Pet宠物类'''
@@ -46,7 +54,7 @@ class Pet(User):
     crystal_num:int = None
     '''水晶当前数量'''
     map:str = None
-    '''水晶当前数量'''
+    '''当前地图'''
     
     last_lookup_time:datetime = datetime.strptime(TIME_NAN, TIME_FORMAT)
     
@@ -61,7 +69,7 @@ class Pet(User):
         # 更新mode
         t=self.read(MAP)
         if t == None:
-            self.map = "default"
+            self.map = DEFAULT_MAP
             self.write(MAP, self.map)
         else:
             self.map = t
@@ -75,13 +83,14 @@ class Pet(User):
         else:
             # 可能的数据格式
             # 352
-            # default:352
-            # default:352|strawberry:1
-            if "default" not in str(t):
+            # 官图:352
+            # 官图:352|草莓酱:1
+            if DEFAULT_MAP not in str(t):           # t = 352
                 self.level = int(float(t))
-            else:
-                d = self.str2Dict(t)
-                self.level = d[self.map]
+            else:                                   # t = 官图:352, or 官图:352|草莓酱:1
+                d = self.str2Dict(t)                # d = {官图:352}, or {官图:352, 草莓酱:1}
+                # what if self.map = 草莓酱 while d = {官图:352}?
+                self.level = d.get(self.map, 1) # if so, return 1.
         
         # 更新 exp
         # 原："352.0" 新："default:352"
@@ -90,11 +99,12 @@ class Pet(User):
             self.exp = 0
             self.write(PET_EXP, self.exp)
         else:
-            if "default" not in str(t):
+            if DEFAULT_MAP not in str(t):
                 self.exp = int(float(t))
             else:
                 d = self.str2Dict(t)
-                self.exp = d[self.map]
+                # what if self.map = 草莓酱 while d = {官图:352}?
+                self.exp = d.get(self.map, 0) # if so, return 0.
         
         # 更新 
         # feeded_cry:int = None
@@ -103,11 +113,11 @@ class Pet(User):
             self.feeded_cry = 0
             self.write(FEEDED_CRY, self.feeded_cry)
         else:
-            if "default" not in str(t):
+            if DEFAULT_MAP not in str(t):
                 self.feeded_cry = int(float(t))
             else:
                 d = self.str2Dict(t)
-                self.feeded_cry = d[self.map]
+                self.feeded_cry = d.get(self.map, 0)
             
         # 更新 crystal_num
         t=self.read(CRY_NUM)
@@ -129,9 +139,35 @@ class Pet(User):
         if map_name not in MAP_LIST:
             msg = f"不存在该地区"
             return msg
-        self.map = MAP_DICT(map_name)
+        # self.map = MAP_DICT(map_name)
+        self.map = map_name
         self.write(MAP, self.map)
-        msg = f"已切换至{map_name}地区的玛德琳"
+        msg = f"玛德琳已来到[{map_name}]"
+        return msg
+    
+    # TODO map指定地图转换经验
+    def updateExpfromMap(self, map_name=None) -> str:
+        t=self.read(PET_EXP)
+        if t == None:
+            d = {DEFAULT_MAP: 0}
+        elif DEFAULT_MAP not in str(t):
+            d = {DEFAULT_MAP: int(float(t))}
+        else:
+            d = self.str2Dict(t)
+        
+        total_exp:int = 0
+        msg = ""
+        for key in d:
+            exp = d[key]
+            if key != self.map and exp != 0:
+                d[key] = 0
+                msg += f"\r\n从[{key}]中获得了{exp}点经验值"
+                total_exp += exp
+        
+        d[self.map] += total_exp
+        
+        self.exp = d[self.map]
+        self.write(PET_EXP, self.dict2Str(d), force=True)
         return msg
         
     def canLevelUp(self) -> bool:
@@ -291,22 +327,44 @@ class Pet(User):
     
     # 以下是get类型函数
     
+    # 统一获取table路径方式
+    def petTable(self) -> str:
+        return pd.read_csv(PET_TABLE_PATH.get(self.map, DEFAULT_MAP), encoding="gb2312")
+    
+    def getTotalLevel(self) -> int:
+        # 原："352.0" 新："官图:352|草莓酱:1"
+        t=self.read(PET_LEVEL)
+        total_level = 0
+        if t == None:
+            total_level = 1
+        else:
+            # 可能的数据格式
+            # 352
+            # 官图:352
+            # 官图:352|草莓酱:1
+            if DEFAULT_MAP not in str(t):           # t = 352
+                total_level = int(float(t))
+            else:                                   # t = 官图:352, or 官图:352|草莓酱:1
+                d = self.str2Dict(t)                # d = {官图:352}, or {官图:352, 草莓酱:1}
+                for key in d:
+                    total_level += d[key]
+        return total_level
+    
     def getLevelUpExp(self) -> int:
         '''查询升级所需经验'''
-        pet_table = pd.read_csv(PET_TABLE_PATH, encoding="gb2312")
+        pet_table = self.petTable()
         levelup_exp = pet_table.at[self.level-1, LEVELUP_EXP]
         return int(levelup_exp)
 
     def getLevelUpCry(self) -> int:
         '''查询升级所需水晶'''
-        pet_table = pd.read_csv(PET_TABLE_PATH, encoding="gb2312")
+        pet_table = self.petTable()
         levelup_cry = int(float(pet_table.at[self.level-1, LEVELUP_CRY]))
         return levelup_cry
     
-    @classmethod
     def getNamebyLevel(self, level:int) -> str:
         '''获取宠物名称'''
-        pet_table = pd.read_csv(PET_TABLE_PATH, encoding="gb2312")
+        pet_table = self.petTable()
         name = pet_table.at[level-1, NAME]
         return name
 
@@ -314,11 +372,10 @@ class Pet(User):
         '''获取宠物名称'''
         return self.getNamebyLevel(level=self.level)
     
-    @classmethod
     def getImagePathbyLevel(self, level:int) -> str:
         '''获取宠物图片路径'''
         name = self.getNamebyLevel(level=level)
-        image_path = os.path.abspath(IMAGE_PATH) +"\\" + name + ".png"
+        image_path = os.path.abspath(IMAGE_PATH.get(self.map, DEFAULT_MAP)) +"\\" + name + ".png"
         if not os.path.exists(image_path):
             return None
         file_image_path = "file:///" + image_path
@@ -350,9 +407,9 @@ class Pet(User):
         return s
     
     # 重写write
-    def write(self, column, data):
+    def write(self, column, data, force = False):
         add_pre_list = {PET_EXP, PET_LEVEL, FEEDED_CRY}
-        if column in add_pre_list:
+        if column in add_pre_list and force == False:
             s = str(self.read(column))
             d = self.str2Dict(s)
             d[self.map] = data

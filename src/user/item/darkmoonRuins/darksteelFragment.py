@@ -11,8 +11,8 @@ class darksteelFragment(Item):
     process_hour = 1 # 小时
     final_item = "darksteel"
     
-    def __init__(self, user_id:int, item_id:int):
-        super(darksteelFragment, self).__init__(user_id=user_id, item_id=item_id)
+    def __init__(self, user_id:int):
+        super(darksteelFragment, self).__init__(user_id=user_id, item_id=self.getIdbyEnglishName(self.__class__.__name__))
         self._update()
     
     def _update(self):

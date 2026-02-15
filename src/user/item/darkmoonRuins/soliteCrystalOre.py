@@ -9,8 +9,8 @@ class soliteCrystalOre(Item):
     # item_id = ID
     get_cry_hour = 3
     
-    def __init__(self, user_id:int, item_id:int):
-        super(soliteCrystalOre, self).__init__(user_id=user_id, item_id=item_id)
+    def __init__(self, user_id:int):
+        super(soliteCrystalOre, self).__init__(user_id=user_id, item_id=self.getIdbyEnglishName(self.__class__.__name__))
         self._update()
     
     def _update(self):

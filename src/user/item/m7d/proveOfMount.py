@@ -1,15 +1,15 @@
 ﻿from item.item import Item
 NAME_IN_USERITEM = "proveOfMount"
 
-ID = 17
+# ID = 17
 MULTI = 2
 
 class proveOfMount(Item):
-    item_id = ID
+    # item_id = ID
     multi = MULTI
     
     def __init__(self, user_id:int):
-        super(proveOfMount, self).__init__(user_id=user_id, item_id=ID)
+        super(proveOfMount, self).__init__(user_id=user_id, item_id=self.getIdbyEnglishName(self.__class__.__name__))
         self._update()
     
     def _update(self):

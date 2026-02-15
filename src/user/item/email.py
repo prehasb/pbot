@@ -7,8 +7,8 @@ class email(Item):
     # item_id = ID
     skip_minute = SKIP_MINUTE
     
-    def __init__(self, user_id:int, item_id:int):
-        super(email, self).__init__(user_id=user_id, item_id=item_id)
+    def __init__(self, user_id:int):
+        super(email, self).__init__(user_id=user_id, item_id=self.getIdbyEnglishName(self.__class__.__name__))
         self._update()
     
     def _update(self):

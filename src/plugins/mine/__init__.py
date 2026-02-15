@@ -3,6 +3,7 @@ from nonebot.plugin import PluginMetadata
 from nonebot.adapters.onebot.v11 import MessageEvent
 from nonebot.adapters import Message
 from nonebot.params import CommandArg
+from nonebot.permission import SUPERUSER
 
 import random as rd
 import time as tm
@@ -112,5 +113,36 @@ async def handle_throw(event: MessageEvent, arg: Message = CommandArg()):
     
     await throw.finish(message=msg, at_sender=True)
 
-
+givestone = on_command("givestone", permission=SUPERUSER)
+@givestone.handle()
+async def handle_givestone(event: MessageEvent, arg: Message = CommandArg()):
+    
+    args = str(arg).lower().split()
+    
+    if len(args) !=1 and len(args) !=2 and len(args) !=3:
+        await throw.finish()
+    
+    name = ""
+    num = 1
+    level = 0
+    
+    if len(args) ==1:
+        name = args[0]
+    
+    if len(args) ==2:
+        num = args[1]
+    
+    if len(args) ==3:
+        level = args[2]
+        
+    user_id = event.user_id
+    
+    stome_name = str(name) + "+" + str(level)
+    level = 0
+    
+    mine = Mine(user_id=user_id)
+    
+    msg = mine.give(stome_name, num)
+    
+    await givestone.finish(message=msg, at_sender=True)
 

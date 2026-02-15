@@ -3,14 +3,14 @@ import datetime as dt
 from datetime import datetime
 
 NAME_IN_USERITEM = "herbarium"
-ID = 11
+# ID = 11
 TIME_SKIP = 10
 
 class herbarium(Item):
-    item_id = ID
+    # item_id = ID
     
     def __init__(self, user_id:int):
-        super(herbarium, self).__init__(user_id=user_id, item_id=ID)
+        super(herbarium, self).__init__(user_id=user_id, item_id=self.getIdbyEnglishName(self.__class__.__name__))
         self._update()
     
     def _update(self):

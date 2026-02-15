@@ -114,15 +114,13 @@ class Factory(User):
             msg += "\r\n你的玛德琳快饿死了！"
         
         exp_num = self.getExpNum()
-        msg += f"\r\n你获得了{exp_num}经验值"
+        msg += f"\r\n你从[工厂]中获得了{exp_num}经验值"
         cry_num = self.getCryNum()
         if cry_num != 0:
-            msg += f"\r\n你获得了{cry_num}个冲刺水晶"
-        
-        # 执行升级
-        msg += p.levelupPet()
+            msg += f"\r\n获得了{cry_num}个冲刺水晶"
         
         lookup_time = datetime.now().replace(microsecond=0)
+        
         self.write(LAST_LOOKUP_TIME, lookup_time)
         p.write(PET_EXP, p.exp)
         p.write(CRY_NUM, p.crystal_num)
@@ -139,17 +137,19 @@ class Factory(User):
         
         # 20250510添加：反转按钮，经验值与水晶反转
         #######################################################
+        from item.itemOperation import ItemOperation
+        io = ItemOperation(self.user_id)
         if button_flag:
             from item.reverseButton import reverseButton
             button = reverseButton(self.user_id)
             if button.state == 1:
                 expPs = factory_table.at[self.factory_level-1, CRY_PH]
             
-                # 20250418添加：宠物每升100级增加1水晶数量
+                # 20250418添加：宠物每升100级增加1每秒经验
                 #######################################################
                 from user.pet import Pet
                 p = Pet(self.user_id)
-                expPs += p.level//100
+                expPs += p.getTotalLevel()//100
                 #######################################################
                 expPs = self.getFacrotyCryPh(button_flag=False)
         
@@ -186,7 +186,7 @@ class Factory(User):
         #######################################################
         from user.pet import Pet
         p = Pet(self.user_id)
-        CryPh += p.level//100
+        CryPh += p.getTotalLevel()//100
         #######################################################
         
         # 20250614添加：每持有1个黑钢，增加1水晶数量
@@ -246,7 +246,7 @@ class Factory(User):
         from user.pet import Pet
         p = Pet(self.user_id)
         MAX_EXP_PL = 100
-        max_save_exp += (p.level-1)*MAX_EXP_PL
+        max_save_exp += (p.getTotalLevel()-1)*MAX_EXP_PL
         #######################################################
         
         return int(max_save_exp)

@@ -28,6 +28,8 @@ from item.crystalHeart.crystalHeartDreamRidge import crystalHeartDreamRidge
 from item.crystalHeart.crystalHeartStarfish import crystalHeartStarfish
 from item.darkmoonRuins.crystalHeartLostSoul import crystalHeartLostSoul
 from item.crystalHeart.crystalHeartSuperluminary import crystalHeartSuperluminary
+from item.crystalHeart.crystalHeartSandsofTime import crystalHeartSandsofTime
+from item.crystalHeart.crystalHeartShatterSong import crystalHeartShatterSong
 
 # 工厂加工类
 from item.mine.unopenedFuel import unopenedFuel
@@ -35,39 +37,41 @@ from item.mine.unopenedCrystal import unopenedCrystal
 
 from item.item import Item
 ITEM_CLASS_MAPPING:dict[str, Item] = {
-    "test_item": test_item,
-    "expSaveBall": expSaveBall,
-    "expEater": expEater,
-    "junkFood": junkFood,
-    "item1a": item1a,
-    "item2a": item2a,
-    "herbarium": herbarium,
-    "email" : email,
-    "reverseButton": reverseButton,
-    "proveOfMount": proveOfMount,
-    "darksteelRawOre": darksteelRawOre,
-    "darksteelFragment": darksteelFragment,
-    "darksteel": darksteel,
-    "soliteCrystalOre": soliteCrystalOre,
-    "luniteCrystalOre": luniteCrystalOre,
-    "theDreamer": theDreamer,
+    test_item.__name__: test_item,
+    expSaveBall.__name__: expSaveBall,
+    expEater.__name__: expEater,
+    junkFood.__name__: junkFood,
+    item1a.__name__: item1a,
+    item2a.__name__: item2a,
+    herbarium.__name__: herbarium,
+    email.__name__ : email,
+    reverseButton.__name__: reverseButton,
+    proveOfMount.__name__: proveOfMount,
+    darksteelRawOre.__name__: darksteelRawOre,
+    darksteelFragment.__name__: darksteelFragment,
+    darksteel.__name__: darksteel,
+    soliteCrystalOre.__name__: soliteCrystalOre,
+    luniteCrystalOre.__name__: luniteCrystalOre,
+    theDreamer.__name__: theDreamer,
     
     # 水晶之心
-    "crystalHeart": crystalHeart,
-    "crystalHeartGlide": crystalHeartGlide,
-    "crystalHeartJaded": crystalHeartJaded,
-    "crystalHeartStartfruit": crystalHeartStartfruit,
-    "crystalHeartHell": crystalHeartHell,
-    "crystalHeartTerminal": crystalHeartTerminal,
-    "crystalHeart7d": crystalHeart7d,
-    "crystalHeartDreamRidge": crystalHeartDreamRidge,
-    "crystalHeartStarfish": crystalHeartStarfish,
-    "crystalHeartLostSoul": crystalHeartLostSoul,
-    "crystalHeartSuperluminary": crystalHeartSuperluminary,
+    crystalHeart.__name__: crystalHeart,
+    crystalHeartGlide.__name__: crystalHeartGlide,
+    crystalHeartJaded.__name__: crystalHeartJaded,
+    crystalHeartStartfruit.__name__: crystalHeartStartfruit,
+    crystalHeartHell.__name__: crystalHeartHell,
+    crystalHeartTerminal.__name__: crystalHeartTerminal,
+    crystalHeart7d.__name__: crystalHeart7d,
+    crystalHeartDreamRidge.__name__: crystalHeartDreamRidge,
+    crystalHeartStarfish.__name__: crystalHeartStarfish,
+    crystalHeartLostSoul.__name__: crystalHeartLostSoul,
+    crystalHeartSuperluminary.__name__: crystalHeartSuperluminary,
+    crystalHeartSandsofTime.__name__: crystalHeartSandsofTime,
+    crystalHeartShatterSong.__name__: crystalHeartShatterSong,
     
     # 工厂加工
-    "unopenedFuel": unopenedFuel,
-    "unopenedCrystal": unopenedCrystal,
+    unopenedFuel.__name__: unopenedFuel,
+    unopenedCrystal.__name__: unopenedCrystal,
 }
 
 

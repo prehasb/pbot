@@ -38,7 +38,7 @@ class ItemOperation(User):
         english_name = self.getEnglishNamebyName(name)
         id = self.getIdbyName(name)
         itemClass = ITEM_CLASS_MAPPING.get(english_name, Item)
-        item_being_bought = itemClass(user_id=self.user_id, item_id=id)
+        item_being_bought = itemClass(user_id=self.user_id)
         
         # 根据数据库，判断是否可购买
         if not item_being_bought.canBuy():
@@ -93,7 +93,7 @@ class ItemOperation(User):
         msg = "\r\n你的道具如下"
         for english_name in ITEM_CLASS_MAPPING.keys():
             id = self.getIdbyEnglishName(english_name)
-            item_being_checked = ITEM_CLASS_MAPPING[english_name](user_id=self.user_id, item_id=id)
+            item_being_checked = ITEM_CLASS_MAPPING[english_name](user_id=self.user_id)
             if item_being_checked.number != 0:
                 msg += f"\r\n- {item_being_checked.getName()} x {item_being_checked.number}"
         if msg == "\r\n你的道具如下":

@@ -232,8 +232,8 @@ class Mine(User):
         msg += f"\r\n炉内矿石：{self.stone_name}"
         if self.level > 0:
             msg += f"+{self.level}"
-        msg += f"\r\n炉内温度：{self.tempuratureImform(self.tempurature)}"
-        msg += f"\r\n反应活性：{self.activityImform(self.activity)}"
+        msg += f"\r\n炉内温度：{self.tempuratureImform(self.tempurature)}({self.tempurature}℃)"
+        msg += f"\r\n反应活性：{self.activityImform(self.activity)}({self.activity}%)"
         # 还有其他信息吗？
         
         return msg
@@ -317,17 +317,17 @@ class Mine(User):
         # 改变锅炉温度
         if stone_new.add_tempurature > 0:
             self.tempurature = self.tempurature + (2000-self.tempurature)*stone_new.add_tempurature/100
-            msg += "\r\n炉内温度升高了。"
+            msg += f"\r\n炉内温度升高了。({self.tempurature}℃)"
         if stone_new.add_tempurature < 0:
             self.tempurature = self.tempurature + (self.tempurature-27)*stone_new.add_tempurature/100
-            msg += "\r\n炉内温度降低了。"
+            msg += f"\r\n炉内温度降低了。({self.tempurature}℃)"
         
         # 改变反应活性
         self.activity += stone_new.add_activity
         if stone_new.add_activity < 0:
-            msg += "\r\n反应活性降低了。"
+            msg += f"\r\n反应活性降低了。({self.activity}%)"
         if stone_new.add_activity > 0:
-            msg += "\r\n反应活性提高了。"
+            msg += f"\r\n反应活性提高了。({self.activity}%)"
         
         if self.activity < 0:
             self.activity = 0
@@ -385,18 +385,17 @@ class Mine(User):
         
         return msg
     
-    def give(self, name, num:int=1):
+    def give(self, name, num:int=1, level=0):
         msg = ""
         if not Stone.exist(name):
-            msg += "不存在该物品"
+            msg += f"不存在该物品{name}"
             return msg
-        for i in range(int(num)):
-            self.storage.append(name)
+        # for i in range(int(num)):
+        self.storage.append(name)
         msg += f"已获得{num}个{name}"
         self.write(STORAGE, self.list2Str(self.storage))
         
         return msg
-    
     
     @classmethod
     def searchMineFunction(self, tempurature, activity, stone1_name, stone2_name):

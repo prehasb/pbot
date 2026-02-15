@@ -85,9 +85,10 @@ class Item(User):
         name = item_table.at[item_id, NAME]
         return name
     
+    @classmethod
     def getName(self) -> str:
         '''查询道具名称'''
-        name = self.getNamebyId(self.item_id)
+        name = self.getNamebyId(self.getIdbyEnglishName(self.__name__))
         return name
     
     @classmethod
@@ -108,7 +109,7 @@ class Item(User):
     @classmethod
     def canBuy(self) -> bool:
         item_table = pd.read_csv(ITEM_TABLE_PATH, encoding="gb2312")
-        can_buy = bool(item_table.at[self.item_id, CAN_BUY])
+        can_buy = bool(item_table.at[self.getIdbyEnglishName(self.__name__), CAN_BUY])
         return can_buy
     
     @classmethod
@@ -138,7 +139,7 @@ class Item(User):
     def getPrice(self) -> bool:
         '''查询道具价格'''
         item_table = pd.read_csv(ITEM_TABLE_PATH, encoding="gb2312")
-        price = int(item_table.at[self.item_id, PRICE])
+        price = int(item_table.at[self.getIdbyEnglishName(self.__name__), PRICE])
         return price
     
     @classmethod
@@ -147,3 +148,11 @@ class Item(User):
         msg += f"\r\n暂无该道具{self.getName()}的描述"
         return msg
 
+    @classmethod
+    def getIdbyEnglishName(self, name_in_useritem:str) -> int|None:
+        '''查询道具在item_table表中的名称'''
+        item_table = pd.read_csv(ITEM_TABLE_PATH, encoding="gb2312")
+        row_list = item_table[item_table[NAME_IN_USERITEM]==name_in_useritem]
+        if row_list.empty:
+            return None
+        return int(row_list.index[0])

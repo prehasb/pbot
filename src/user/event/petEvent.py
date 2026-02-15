@@ -303,12 +303,13 @@ class petEvent(User):
         '''通过字典的权重随机选择一个id，若表为空，返回0'''
         # 数据格式：d[id, priotiry] = {1:1, 5:1, 10:2, 11:1}
         
-        sum_p = 0
+        sum_p:int = 0
         for id in d.keys():
             sum_p += d[id] # sum_p = 5
         
         rd.seed()
-        random_number = rd.randint(1, sum_p) # randint=2
+        # sum_p 可能被d[id]强转换为浮点型
+        random_number = rd.randint(1, int(sum_p)) # randint=2
         event_id = 0
         for id in d.keys():
             if random_number <= d[id]: # 1: randint = 2, 2:randing = 1
@@ -364,7 +365,7 @@ class DrawPhoto(object):
         self.file_list = [file for file in files if file.lower().endswith(image_extensions)]
         print("self.file_list: ", self.file_list)
         if "bg.png" in self.file_list:
-            self.file_list.remove("bg.png")
+            self.file_list.remove("bg.png") # 过滤bg.png
         
     def outputTotalPhoto(self):
         if self.final_photo == None:
@@ -388,6 +389,13 @@ class DrawPhoto(object):
                 break
         
     def addRandomPhoto(self) -> bool:
+        '''
+        随机挑选照片窗口中的位置L(x, y)和一张图片I(img.size(width, height))
+        
+        若这个位置L可以放得下图片I，则放下图片并返回真，否则返回假
+        
+        :return: True: 位置L放得下图片I; Falst: 位置L放不下图片I
+        '''
         image_name = self.getRandomImagePath()
         image_path = os.path.join(self.imagePath, image_name)
         if self.file_list == []:
@@ -517,7 +525,7 @@ class DrawPhoto(object):
         scale = max(x_scale, y_scale)
         
         bg = bg.resize((int(bg_x*scale), int(bg_y*scale)))
-        null = Image.new("RGBA", (self.width, self.height), (0, 0, 0, 204))
+        null = Image.new("RGBA", (self.width, self.height), (0, 0, 0, 160))
         bg.paste(null, (0, 0), null)
         bg = bg.crop((0,0,self.width,self.height))
         return bg
@@ -557,7 +565,7 @@ class DrawPhoto(object):
         
         return overlap_area / (self.height*self.width)
     
-    def addNewPhoto(self, img, xy) -> None:
+    def addNewPhoto(self, img:Image, xy) -> None:
         if self.final_photo == None:
             self.final_photo = self.createNullImage()
         
@@ -567,8 +575,17 @@ class DrawPhoto(object):
         self.final_photo.paste(photo, (xy[0]-50, xy[1]-50), photo)
     
     def getRandomImagePath(self) -> str:
-        # 随机选择一个图片文件
-        random_image = rd.choice(self.file_list)
+        '''根据大小加权随机选择一个图片文件'''
+        
+        # 设置权重
+        weights = []
+        for img_name in self.file_list:
+            with Image.open(os.path.join(self.imagePath, img_name)) as img:
+                width, height = img.size # img.size:List[width, height]
+                weights.append(width + height)
+        
+        # 调用choices函数，带权重选择
+        random_image = rd.choices(self.file_list, weights=weights, k=1)[0]
         return random_image
     
     def getRandomXY(self, img:Image) -> tuple:
@@ -578,7 +595,7 @@ class DrawPhoto(object):
         y = rd.randint(0, max_y)
         return (x, y)
     
-    def isInside(self, img, xy) -> bool:
+    def isInside(self, img:Image, xy:list) -> bool:
         min_x = 0
         min_y = 0
         max_x = self.width - img.size[0]

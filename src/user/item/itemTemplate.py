@@ -23,8 +23,8 @@ class itemTemplate(Item): # 修改类名 完成情况：()
     # 在此处定义其他全局成员 完成情况：()
     #########################
     
-    def __init__(self, user_id:int, item_id:int):
-        super(itemTemplate, self).__init__(user_id=user_id, item_id=item_id) # 修改类名 完成情况：()
+    def __init__(self, user_id:int):
+        super(itemTemplate, self).__init__(user_id=user_id, item_id=self.getIdbyEnglishName(self.__class__.__name__)) # 修改类名 完成情况：()
         
         #########################
         # 在此处定义其他成员 完成情况：()
