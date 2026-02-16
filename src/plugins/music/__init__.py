@@ -63,21 +63,34 @@ async def handle_music(event: GroupMessageEvent, arg: Message = CommandArg()):
     rd.seed(tm.time_ns())
     rand_time = rd.randint(1, 10)
     
+    def is_number(s):
+        try:
+            float(s)  # 尝试转换为 float（可以识别整数和小数）
+            return True
+        except ValueError:
+            return False
+    
+
     all_music = False
     if len(args) != 0:
         if str(arg[0]) == "e":
             rand_time = 10
-        if str(arg[0]) == "n":
+        elif str(arg[0]) == "n":
             rand_time = 5
-        if str(arg[0]) == "h":
+        elif str(arg[0]) == "h":
             rand_time = 2
-        if str(arg[0]) == "l":
+        elif str(arg[0]) == "l":
             rand_time = 1
-        if str(arg[0]) == "all":
+        elif is_number(str(arg[0])) and float(str(arg[0]))>0 and float(str(arg[0]))<10:
+            rand_time = float(str(arg[0]))
+        else:
             all_music = True
             rand_time = -1
-        elif float(str(arg[0]))>0 and float(str(arg[0]))<10:
-            rand_time = float(str(arg[0]))
+            if str(arg[0]) == "all":
+                pass
+            else:
+                index_now = RandomVideo.getIndexByName(arg[0])
+            
     
     output_music_path = RandomVideo.getRandomClip(song_index=index_now, clip_duration=rand_time)
     if not os.path.exists(output_music_path):

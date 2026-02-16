@@ -15,7 +15,7 @@ MUSIC_PATH = './src/database/music/music.csv'
 
 FATHER_PATH = "./src/database/music/"
 
-MAP_NAME = "map_name"
+SONG_NAME = "song_name"
 LOBBY = "lobby"
 
 class RandomVideo(object):
@@ -45,7 +45,7 @@ class RandomVideo(object):
         
         @param: song_index MUSIC_PATH的csv文件中的歌曲下标'''
         database = pd.read_csv(MUSIC_PATH, encoding="gb2312") # get the database
-        name = database.at[song_index, MAP_NAME] # get the name
+        name = database.at[song_index, SONG_NAME] # get the name
         return name
     
     @classmethod
@@ -59,7 +59,7 @@ class RandomVideo(object):
         '''
         database = pd.read_csv(MUSIC_PATH, encoding="gb2312") # get the database
         column = database.shape[1] # get the total column
-        name = database.at[song_index, MAP_NAME] # get the name
+        name = database.at[song_index, SONG_NAME] # get the name
         alias=[name]
         for i in range(2, column):
             alias.append(database.iloc[song_index, i])
@@ -67,27 +67,54 @@ class RandomVideo(object):
         
     
     @classmethod
+    def getClip(self, name : str|None = None, clip_duration : int = 5) -> str:
+        music_path = FATHER_PATH + str(name) + ".mp4" # "./src/database/music/" + "1" + "/" + "节奏山脊"
+        if not os.path.exists(music_path):
+            return music_path
+        audio = AudioSegment.from_file(music_path)
+        total_duration = audio.duration_seconds
+        if clip_duration == -1:
+            cropped_audio = audio[0:total_duration*1000]
+            cropped_audio.export(output_path)
+            return output_path
+        rand_start = rd.randint(0, int(total_duration-clip_duration))
+        # audio = AudioSegment.from_file(clip_path, format="amr")
+        start_time = rand_start * 1000  # 2s
+        end_time = (rand_start + clip_duration) * 1000    # 5s
+        cropped_audio = audio[start_time:end_time]
+        cropped_audio.export(output_path)
+        return output_path
+
+    @classmethod
+    def getIndexByName(self, name : str) -> int:
+        df = pd.read_csv(MUSIC_PATH, encoding="gb2312")
+        for row_idx, row in df.iterrows():
+            for col_idx, cell in enumerate(row):
+                if str(cell) == str(name):
+                    return row_idx
+        return 0
+
+    @classmethod
     def getRandomClip(self, song_index : int = 0, clip_duration : int = 5) -> str:
         '''
         cut a random clip of the indexth song in the MUSIC_PATH csv file
         
         song_index: the index of the song saved in the MUSIC_PATH csv file
         
-        clip_duration: the duration of the output audio file
+        clip_duration: the duration of the output audio file, -1 for all clip
         
         return: the relative output path of the audio file
         '''
         
         database = pd.read_csv(MUSIC_PATH, encoding="gb2312") # get the MUSIC_PATH database
         
-        name = database.at[song_index, MAP_NAME] # get the name
+        name = database.at[song_index, SONG_NAME] # get the name
         if str(database.at[song_index, LOBBY])=="nan":
             lobby = 0
         else:
             lobby = int(database.at[song_index, LOBBY]) # 获取路径
         
         music_path = FATHER_PATH + str(lobby) + "/" + str(name) + ".mp4" # "./src/database/music/" + "1" + "/" + "节奏山脊"
-        # music_path = FATHER_PATH + str(2) + "/" + str("机制库") + ".mp4" # "./src/database/music/" + "1" + "/" + "机制库"
         if not os.path.exists(music_path):
             return music_path
         audio = AudioSegment.from_file(music_path)
