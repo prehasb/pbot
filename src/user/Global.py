@@ -27,5 +27,16 @@ class Global(object):
         database.at[0, column] = data
         database.to_csv(self.database_path, index=False)
     
+    # @classmethod
+    # def getRowOf(self, group_id):
+    #     database = pd.read_csv(self.database_path)
+    #     row = database[database["group_id"] == group_id]
+    #     return row
+    
+    # @classmethod
+    # def isPet(self, group_id):
+    #     row = self.getRowOf(group_id)
+    #     self.read()
+    
     
     

@@ -1,5 +1,4 @@
-﻿from moviepy import ImageClip, AudioFileClip, VideoFileClip
-import random as rd
+﻿import random as rd
 from pydub import AudioSegment
 import pandas as pd
 import time as tm
@@ -7,9 +6,7 @@ import os
 
  
 # 设置文件路径
-IMAGE_PATH = './src/database/music/blank.png'  # 图片文件路径
-audio_path = './src/database/music/2.mp4'  # MP3音频文件路径
-output_path = './src/database/music/output.amr'  # 输出MP4文件路径
+OUTPUT_PATH = './src/database/music/output.amr'  # 输出MP4文件路径
 
 MUSIC_PATH = './src/database/music/music.csv'
 
@@ -75,15 +72,15 @@ class RandomVideo(object):
         total_duration = audio.duration_seconds
         if clip_duration == -1:
             cropped_audio = audio[0:total_duration*1000]
-            cropped_audio.export(output_path)
-            return output_path
+            cropped_audio.export(OUTPUT_PATH)
+            return OUTPUT_PATH
         rand_start = rd.randint(0, int(total_duration-clip_duration))
         # audio = AudioSegment.from_file(clip_path, format="amr")
         start_time = rand_start * 1000  # 2s
         end_time = (rand_start + clip_duration) * 1000    # 5s
         cropped_audio = audio[start_time:end_time]
-        cropped_audio.export(output_path)
-        return output_path
+        cropped_audio.export(OUTPUT_PATH)
+        return OUTPUT_PATH
 
     @classmethod
     def getIndexByName(self, name : str) -> int:
@@ -121,15 +118,15 @@ class RandomVideo(object):
         total_duration = audio.duration_seconds
         if clip_duration == -1:
             cropped_audio = audio[0:total_duration*1000]
-            cropped_audio.export(output_path)
-            return output_path
+            cropped_audio.export(OUTPUT_PATH)
+            return OUTPUT_PATH
         rand_start = rd.randint(0, int(total_duration-clip_duration))
         # audio = AudioSegment.from_file(clip_path, format="amr")
         start_time = rand_start * 1000  # 2s
         end_time = (rand_start + clip_duration) * 1000    # 5s
         cropped_audio = audio[start_time:end_time]
-        cropped_audio.export(output_path)
-        return output_path
+        cropped_audio.export(OUTPUT_PATH)
+        return OUTPUT_PATH
         
         
         

@@ -19,9 +19,9 @@ qr-0.png
 pyproject.toml
 
 # image和music，减少仓库大小
-src/database/image/
-src/database/eventimage/
 src/database/music/
+src/database/eventimage/PStemp
+src/database/eventimage/p*
 cache/
 
 # 配置环境

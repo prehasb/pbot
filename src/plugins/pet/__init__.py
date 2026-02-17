@@ -69,8 +69,6 @@ async def handle_ck(event: MessageEvent):
         msg += f"\r\n- 当前状态："
         for state_name, end_time in so.state.items():
             msg += f"\r\n {str(stateOperator.getNamebyEnglishName(english_name=state_name))}"
-    if so.exist("test2"):
-            msg += f"\r\n 用户存在测试状态2"
     
     await ck.finish(message=msg, at_sender=True)
 
