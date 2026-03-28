@@ -3,15 +3,6 @@ import numpy as np  # 用于生成 NaN 值
 
 DATABASE_PATH = "./src/database/database.csv"
 
-# 定义column数据
-USER_ID = "user_id"
-PET_HAPPINESS = 3
-PET_HUNGRY = 4
-PET_WATER = 5
-PET_LEVEL = 6
-PET_EXP = 7
-PET_MAXEXP = 8
-
 class User(object):
     user_id : int
     '''用户id'''
@@ -111,7 +102,25 @@ class User(object):
         # self._update()
         # return True
 
+    # 以下是辅助函数
+    def str2Dict(self, s:str) -> dict[str, int]:
+        '''将字符串 s="a:123|b:456" 变为字典 d={"a":123, "b":456} '''
+        if not s:
+            return dict()
+        
+        str_list = s.split("|") # ["a:123", "b:456"]
+        d = dict() 
+        
+        for i in str_list:
+            parts = i.split(':') # parts = ["a","123"]
+            if len(parts) == 2:
+                d[parts[0]] = int(parts[1])
+        return d
 
+    def dict2Str(self, d:dict) -> str:
+        '''将字典 d={"a":123, "b":456} 变为 字符串 s="a:123|b:456" '''
+        s = "|".join(f"{k}:{v}" for k, v in d.items())
+        return s
 
 
 

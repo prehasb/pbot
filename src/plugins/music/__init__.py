@@ -12,6 +12,7 @@ from user.pet import Pet
 import os
 from video.video import RandomVideo
 from nonebot.params import CommandArg
+from Global import Global
 
 TIME_NAN = "2000-01-01 00:00:00"
 
@@ -19,16 +20,15 @@ TIME_NAN = "2000-01-01 00:00:00"
 music = on_command("music")
 guess = on_command("guess")
 giveup = on_command("giveup")
+set_default = on_command("sd")
 
-# TEMP_PATH = "./src/database/music/1/ST1.mp4"
-# TEMP_PATH = "./src/database/music/1/城市之上.mp4"
-# TEMP_PATH = "./src/database/music/1/坠落谜题.mp4"
-# TEMP_PATH = "./src/database/music/1/玫瑰花园.mp4"
+# guess_state = False
+# begin_time = datetime.now() - dt.timedelta(seconds=30)
 
-index_now = 0
-guess_state = False
-total_ans = 0
-begin_time = datetime.now() - dt.timedelta(seconds=30)
+INDEX_NOW = "index_now"
+GUESS_STATE = "guess_state"
+TOTAL_ANS = "total_ans"
+BEGIN_TIME = "begin_time"
 
 CRY_AWARD = 3
 
@@ -40,26 +40,27 @@ def isXsLastTime(last_time: datetime, scnds):
 
 @music.handle()
 async def handle_music(event: GroupMessageEvent, arg: Message = CommandArg()):
-    global guess_state
-    global index_now
-    global total_ans
-    global begin_time
-    total_ans = 0
-    if guess_state:
+    
+    music_dict = Global(event.group_id).getMusicDict()
+    
+    # have begun
+    if music_dict[GUESS_STATE]:
         await music.finish()
     
-    if not isXsLastTime(begin_time, scnds=15):
+    # too fast
+    if not isXsLastTime(music_dict[BEGIN_TIME], scnds=15):
         await music.finish()
     
+    # too many input
     args = str(arg).lower().split()
-    
     if len(args) != 1 and len(args) != 0:
         await music.finish()
+        
+    # init
+    music_dict[TOTAL_ANS] = 0
+    video = RandomVideo(music_dict)
     
-    index_now = RandomVideo.getRandomIndex()
-    # index_now = 100
-    
-    # 控制难度
+    # difficulty
     rd.seed(tm.time_ns())
     rand_time = rd.randint(1, 10)
     
@@ -70,7 +71,7 @@ async def handle_music(event: GroupMessageEvent, arg: Message = CommandArg()):
         except ValueError:
             return False
     
-
+    music_dict[INDEX_NOW] = video.getRandomIndex()
     all_music = False
     if len(args) != 0:
         if str(arg[0]) == "e":
@@ -83,38 +84,37 @@ async def handle_music(event: GroupMessageEvent, arg: Message = CommandArg()):
             rand_time = 1
         elif is_number(str(arg[0])) and float(str(arg[0]))>0 and float(str(arg[0]))<10:
             rand_time = float(str(arg[0]))
-        else:
+        elif str(arg[0]) != "all":
             all_music = True
             rand_time = -1
-            if str(arg[0]) == "all":
-                pass
-            else:
-                index_now = RandomVideo.getIndexByName(arg[0])
+        elif video.getIndexByName(arg[0]):
+            all_music = True
+            rand_time = -1
+            music_dict[INDEX_NOW] = video.getIndexByName(arg[0])
             
-    
-    output_music_path = RandomVideo.getRandomClip(song_index=index_now, clip_duration=rand_time)
+    output_music_path = video.getRandomClip(song_index=music_dict[INDEX_NOW], clip_duration=rand_time)
     if not os.path.exists(output_music_path):
         msg = f"ValueError: there is no file in {output_music_path}"
         await music.finish(message=msg)
-    # ValueError: cannot convert float NaN to integer
     
     output_music_path = "file:///" + os.path.abspath(output_music_path)
     
     msg = MessageSegment.record(file=output_music_path)
     
-    guess_state = True
+    music_dict[GUESS_STATE] = True
     if all_music:
-        guess_state = False
-        await music.send(message=f"接下来播放{RandomVideo.getName(index_now)}")
-    begin_time = dt.datetime.now()
+        music_dict[GUESS_STATE] = False
+        await music.send(message=f"接下来播放{video.getName(music_dict[INDEX_NOW])}")
+    music_dict[BEGIN_TIME] = dt.datetime.now()
     await music.finish(message=msg)
 
 @guess.handle()
 async def handle_guess(event: GroupMessageEvent, arg: Message = CommandArg()):
-    global guess_state
-    global index_now
-    global total_ans
-    if not guess_state:
+    
+    music_dict = Global(event.group_id).getMusicDict()
+    music_dict[TOTAL_ANS] = 0
+    
+    if not music_dict[GUESS_STATE]:
         await music.finish()
     
     args = str(arg).lower().split()
@@ -125,31 +125,31 @@ async def handle_guess(event: GroupMessageEvent, arg: Message = CommandArg()):
     name = str(args[0])
     
     print(f"name: {name}")
-    print(f"RandomVideo.getName(index_now): {RandomVideo.getName(index_now)}")
+    print(f"RandomVideo.getName(music_dict[INDEX_NOW]): {RandomVideo.getName(music_dict[INDEX_NOW])}")
     
-    if name in RandomVideo.getAlias(index_now):
+    if name in RandomVideo.getAlias(music_dict[INDEX_NOW]):
         user_id = event.user_id
         p = Pet(user_id=user_id)
         
-        guess_state = False
-        msg = f"正确，答案是{RandomVideo.getName(index_now)}"
+        music_dict[GUESS_STATE] = False
+        msg = f"正确，答案是{RandomVideo.getName(music_dict[INDEX_NOW])}"
         msg += p.addCry(CRY_AWARD)
         await guess.finish(message=msg, at_sender=True)
     else:
-        total_ans+=1
-        if total_ans > 5:
+        music_dict[TOTAL_ANS]+=1
+        if music_dict[TOTAL_ANS] > 5:
             msg= "你们的猜测是错误的！"
-            total_ans = 0
+            music_dict[TOTAL_ANS] = 0
             await guess.send(message=msg)
         await guess.finish()
 
 @giveup.handle()
 async def handle_giveup(event: GroupMessageEvent):
-    global guess_state
     
-    if not guess_state:
+    music_dict = Global(event.group_id).getMusicDict()
+    if not music_dict[GUESS_STATE]:
         await giveup.finish()
         
-    guess_state = False
-    msg = f"已放弃。答案是{RandomVideo.getName(index_now)}"
+    music_dict[GUESS_STATE] = False
+    msg = f"已放弃。答案是{RandomVideo.getName(music_dict[INDEX_NOW])}"
     await giveup.finish(message=msg)
