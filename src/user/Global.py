@@ -24,7 +24,7 @@ class Global(User):
     
     def getMusicDict(self) -> dict:
         music_string = self.read(MUSIC)
-        if music_string == None:
+        if music_string == None or music_string == '':
             music_dict = DEFAULT_MUSIC_DICT
             self.setMusicDict(music_dict)
         else:
@@ -43,6 +43,32 @@ class Global(User):
     #         return None
     #     return data
     
+    # 以下是辅助函数
+    def str2Dict(self, s:str) -> dict[str, int]:
+        '''将字符串 s="a:123|b:456" 变为字典 d={"a":123, "b":456} '''
+        if not s:
+            return dict()
+        
+        str_list = s.split("|") # ["a:123", "b:456"]
+        typelist:type = [str, int, bool, int, datetime]
+        d = dict() 
+        
+        for i in range(len(str_list)):
+            parts = str_list[i].split(':', 1) # parts = ["a","123"]
+            if len(parts) == 2:
+                if typelist[i] == int:
+                    d[parts[0]] = typelist[i](parts[1])
+                elif typelist[i] == bool:
+                    if parts[1].lower() == "true":
+                        d[parts[0]] = True
+                    else:
+                        d[parts[0]] = False
+                elif typelist[i] == datetime:
+                    d[parts[0]] = datetime.strptime(parts[1], "%Y-%m-%d %H:%M:%S.%f")
+                else: 
+                    d[parts[0]] = typelist[i](parts[1])
+        return d
+
     # @classmethod
     # def write(self, column:str, data) -> bool:
     #     '''向数据库内填写数据'''

@@ -41,7 +41,8 @@ def isXsLastTime(last_time: datetime, scnds):
 @music.handle()
 async def handle_music(event: GroupMessageEvent, arg: Message = CommandArg()):
     
-    music_dict = Global(event.group_id).getMusicDict()
+    gb = Global(event.group_id)
+    music_dict = gb.getMusicDict()
     
     # have begun
     if music_dict[GUESS_STATE]:
@@ -106,12 +107,15 @@ async def handle_music(event: GroupMessageEvent, arg: Message = CommandArg()):
         music_dict[GUESS_STATE] = False
         await music.send(message=f"接下来播放{video.getName(music_dict[INDEX_NOW])}")
     music_dict[BEGIN_TIME] = dt.datetime.now()
+    
+    gb.setMusicDict(music_dict)
     await music.finish(message=msg)
 
 @guess.handle()
 async def handle_guess(event: GroupMessageEvent, arg: Message = CommandArg()):
     
-    music_dict = Global(event.group_id).getMusicDict()
+    gb = Global(event.group_id)
+    music_dict = gb.getMusicDict()
     music_dict[TOTAL_ANS] = 0
     
     if not music_dict[GUESS_STATE]:
@@ -124,32 +128,41 @@ async def handle_guess(event: GroupMessageEvent, arg: Message = CommandArg()):
     
     name = str(args[0])
     
+    video = RandomVideo(music_dict)
+
     print(f"name: {name}")
-    print(f"RandomVideo.getName(music_dict[INDEX_NOW]): {RandomVideo.getName(music_dict[INDEX_NOW])}")
-    
-    if name in RandomVideo.getAlias(music_dict[INDEX_NOW]):
+    print(f"RandomVideo.getName(music_dict[INDEX_NOW]): {video.getName(music_dict[INDEX_NOW])}")
+    at = False
+    if name in video.getAlias(music_dict[INDEX_NOW]):
         user_id = event.user_id
         p = Pet(user_id=user_id)
         
         music_dict[GUESS_STATE] = False
-        msg = f"正确，答案是{RandomVideo.getName(music_dict[INDEX_NOW])}"
+        msg = f"正确，答案是{video.getName(music_dict[INDEX_NOW])}"
         msg += p.addCry(CRY_AWARD)
-        await guess.finish(message=msg, at_sender=True)
+        at = True
+        # await guess.finish(message=msg, at_sender=True)
     else:
         music_dict[TOTAL_ANS]+=1
         if music_dict[TOTAL_ANS] > 5:
             msg= "你们的猜测是错误的！"
             music_dict[TOTAL_ANS] = 0
-            await guess.send(message=msg)
-        await guess.finish()
+        
+    gb.setMusicDict(music_dict)
+    await guess.finish(message=msg, at_sender=at)
 
 @giveup.handle()
 async def handle_giveup(event: GroupMessageEvent):
     
-    music_dict = Global(event.group_id).getMusicDict()
+    gb = Global(event.group_id)
+    music_dict = gb.getMusicDict()
     if not music_dict[GUESS_STATE]:
         await giveup.finish()
-        
+    
+    video = RandomVideo(music_dict)
+
     music_dict[GUESS_STATE] = False
-    msg = f"已放弃。答案是{RandomVideo.getName(music_dict[INDEX_NOW])}"
+    msg = f"已放弃。答案是{video.getName(music_dict[INDEX_NOW])}"
+    
+    gb.setMusicDict(music_dict)
     await giveup.finish(message=msg)

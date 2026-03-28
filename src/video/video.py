@@ -96,7 +96,6 @@ class RandomVideo(object):
                     return row_idx
         return 0
 
-    @classmethod
     def getRandomClip(self, song_index : int = 0, clip_duration : int = 5) -> str:
         '''
         cut a random clip of the indexth song in the MUSIC_PATH csv file
